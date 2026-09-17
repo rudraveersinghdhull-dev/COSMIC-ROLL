@@ -1,0 +1,2601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cosmic Rolls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#07040f;
+    --bg-1:#0d0821;
+    --bg-2:#140d2e;
+    --panel:#150f2c;
+    --panel-2:#1c1440;
+    --line:#2c2258;
+    --text:#eae6f7;
+    --text-dim:#9a91c2;
+    --accent:#8b5cf6;
+    --accent-2:#22d3ee;
+    --gold:#f4b93f;
+    --danger:#f45d7a;
+
+    --c-common:#9ca3af;
+    --c-uncommon:#4ade80;
+    --c-rare:#38bdf8;
+    --c-epic:#b855f7;
+    --c-legendary:#f6ae2d;
+    --c-mythic:#f472b6;
+    --c-divine:#eaf6ff;
+    --c-secret:#ffffff;
+    --c-transcended:#fff7d6;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; height:100%; overscroll-behavior:none;}
+  body{
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -10%, #241a55 0%, transparent 55%),
+      radial-gradient(ellipse 100% 60% at 80% 100%, #1a0f3d 0%, transparent 60%),
+      var(--bg-0);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100%;
+    display:flex;
+    justify-content:center;
+  }
+  .app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* stars background */
+  .stars{position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.6;}
+
+  header.topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px 10px;
+    position:relative; z-index:2;
+  }
+  .brand{
+    font-family:'Sora', sans-serif; font-weight:800; font-size:19px;
+    letter-spacing:0.01em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .brand .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--gold), var(--accent));
+    box-shadow:0 0 10px var(--accent);
+  }
+  .coins-pill{
+    display:flex; align-items:center; gap:6px;
+    background:var(--panel-2); border:1px solid var(--line);
+    padding:7px 12px; border-radius:999px;
+    font-weight:600; font-size:14px;
+  }
+  .coins-pill .icon{font-size:14px;}
+
+  main{
+    flex:1; position:relative; z-index:2;
+    padding:4px 16px 90px;
+    overflow-y:auto;
+  }
+  .view{display:none;}
+  .view.active{display:block; animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ---------- ROLL VIEW ---------- */
+  .stat-row{
+    display:flex; gap:8px; margin-bottom:14px;
+  }
+  .stat-chip{
+    flex:1; background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:10px 12px;
+  }
+  .stat-chip .label{font-size:10.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
+  .stat-chip .value{font-size:16px; font-weight:700; margin-top:2px;}
+
+  .aura-stage{
+    background:radial-gradient(circle at 50% 30%, var(--bg-2), var(--panel) 70%);
+    border:1px solid var(--line);
+    border-radius:24px;
+    padding:30px 20px 26px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    min-height:230px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .aura-stage.rolling .aura-name{ filter:blur(1px); }
+  .aura-glow-ring{
+    width:120px; height:120px; border-radius:50%;
+    margin-bottom:18px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:44px;
+    background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 70%);
+    border:2px solid var(--line);
+    transition:all .25s ease;
+  }
+  .tier-badge{
+    display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.08em; padding:4px 10px; border-radius:999px; margin-bottom:10px;
+  }
+  .aura-name{
+    font-family:'Sora', sans-serif; font-size:23px; font-weight:800; line-height:1.2;
+    margin:2px 0 6px;
+  }
+  .aura-odds{color:var(--text-dim); font-size:13px;}
+  .mutation-badge{
+    display:inline-block; margin-top:6px; font-size:11.5px; font-weight:800; letter-spacing:.04em;
+    background:linear-gradient(90deg,#a78bfa,#22d3ee,#f6ae2d,#f472b6,#a78bfa);
+    background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:rainbowShift 2.4s linear infinite;
+  }
+  .aura-placeholder{color:var(--text-dim); font-size:14px;}
+
+  .equipped-card{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:11px 14px; margin-bottom:12px;
+  }
+  .equipped-card .eq-left{display:flex; align-items:center; gap:10px; min-width:0;}
+  .equipped-card .eq-glyph{font-size:20px; flex-shrink:0;}
+  .equipped-card .eq-text .eq-label{font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
+  .equipped-card .eq-text .eq-name{font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .equip-now-btn{
+    flex-shrink:0; border:1px solid var(--accent); background:rgba(139,92,246,0.15); color:var(--text);
+    border-radius:10px; padding:7px 12px; font-family:inherit; font-weight:600; font-size:12px;
+  }
+
+  .biome-banner{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:11px 14px; margin-bottom:12px; border-left:3px solid var(--biome-color, var(--accent));
+  }
+  .biome-banner .bb-top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .biome-banner .bb-name{font-weight:700; font-size:13.5px;}
+  .biome-banner .bb-timer{font-size:11.5px; color:var(--text-dim); font-variant-numeric:tabular-nums;}
+  .biome-banner .bb-desc{font-size:11.5px; color:var(--text-dim); margin-top:3px;}
+
+  .equip-btn{
+    flex-shrink:0; border:1px solid var(--line); background:var(--panel-2); color:var(--text-dim);
+    border-radius:10px; padding:7px 10px; font-family:inherit; font-weight:600; font-size:11.5px;
+  }
+  .equip-btn.is-equipped{border-color:var(--gold); color:var(--gold); background:rgba(246,174,45,0.12);}
+
+  .luck-btn{
+    width:100%; border:1px solid var(--line); border-radius:14px; padding:12px;
+    background:var(--panel-2); color:var(--text); font-family:'Sora', sans-serif; font-weight:700; font-size:13.5px;
+    margin-top:8px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .luck-btn:disabled{opacity:0.45;}
+  .luck-btn .lk-cost{color:var(--gold); font-weight:700;}
+
+  /* tier coloring */
+  .tier-Common .aura-glow-ring{border-color:var(--c-common); box-shadow:0 0 18px -4px var(--c-common);}
+  .tier-Common .tier-badge{background:rgba(156,163,175,0.15); color:var(--c-common);}
+  .tier-Common .aura-name{color:var(--c-common);}
+
+  .tier-Uncommon .aura-glow-ring{border-color:var(--c-uncommon); box-shadow:0 0 20px -3px var(--c-uncommon);}
+  .tier-Uncommon .tier-badge{background:rgba(74,222,128,0.15); color:var(--c-uncommon);}
+  .tier-Uncommon .aura-name{color:var(--c-uncommon);}
+
+  .tier-Rare .aura-glow-ring{border-color:var(--c-rare); box-shadow:0 0 22px -2px var(--c-rare);}
+  .tier-Rare .tier-badge{background:rgba(56,189,248,0.15); color:var(--c-rare);}
+  .tier-Rare .aura-name{color:var(--c-rare);}
+
+  .tier-Epic .aura-glow-ring{border-color:var(--c-epic); box-shadow:0 0 26px 0 var(--c-epic);}
+  .tier-Epic .tier-badge{background:rgba(184,85,247,0.18); color:var(--c-epic);}
+  .tier-Epic .aura-name{color:var(--c-epic);}
+  .anim-on .tier-Epic .aura-glow-ring{animation:pulseGlow 1.8s ease-in-out infinite;}
+
+  .tier-Legendary .aura-glow-ring{border-color:var(--c-legendary); box-shadow:0 0 30px 2px var(--c-legendary);}
+  .tier-Legendary .tier-badge{background:rgba(246,174,45,0.18); color:var(--c-legendary);}
+  .tier-Legendary .aura-name{color:var(--c-legendary); text-shadow:0 0 16px rgba(246,174,45,0.5);}
+  .anim-on .tier-Legendary .aura-glow-ring{animation:pulseGlow 1.4s ease-in-out infinite;}
+
+  .tier-Mythic .aura-glow-ring{border-color:var(--c-mythic); box-shadow:0 0 34px 4px var(--c-mythic);}
+  .tier-Mythic .tier-badge{background:rgba(244,114,182,0.18); color:var(--c-mythic);}
+  .tier-Mythic .aura-name{color:var(--c-mythic); text-shadow:0 0 18px rgba(244,114,182,0.6);}
+  .anim-on .tier-Mythic .aura-glow-ring{animation:pulseGlow 1.1s ease-in-out infinite, spin 6s linear infinite;}
+
+  .tier-Divine .aura-glow-ring{border-color:var(--c-divine); box-shadow:0 0 40px 6px rgba(234,246,255,0.8);}
+  .tier-Divine .tier-badge{background:rgba(234,246,255,0.18); color:var(--c-divine);}
+  .tier-Divine .aura-name{
+    background:linear-gradient(90deg,#eaf6ff,#c9e7ff,#eaf6ff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 22px rgba(234,246,255,0.7);
+  }
+  .anim-on .tier-Divine .aura-glow-ring{animation:pulseGlow .9s ease-in-out infinite, spin 4s linear infinite;}
+  .anim-on .tier-Divine .aura-stage{animation:divineFlash 2.2s ease-in-out infinite;}
+
+  .tier-Secret .aura-glow-ring{border-color:#fff; box-shadow:0 0 50px 8px rgba(255,255,255,0.9);}
+  .tier-Secret .tier-badge{
+    background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--gold),var(--danger),var(--accent));
+    background-size:300% 100%;
+    color:#0a0714; animation:rainbowShift 3s linear infinite;
+  }
+  .tier-Secret .aura-name{
+    background:linear-gradient(90deg,#a78bfa,#22d3ee,#f6ae2d,#f472b6,#a78bfa);
+    background-size:300% 100%;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:rainbowShift 3s linear infinite;
+  }
+  .anim-on .tier-Secret .aura-glow-ring{animation:pulseGlow .7s ease-in-out infinite, spin 3s linear infinite;}
+  .anim-on .tier-Secret .aura-stage{animation:secretFlash 1.6s ease-in-out infinite;}
+
+  .tier-Transcended .aura-glow-ring{border-color:#fff8e1; box-shadow:0 0 70px 14px rgba(255,248,225,0.95);}
+  .tier-Transcended .tier-badge{
+    background:linear-gradient(90deg,#fff7d6,#ffd76a,#fff7d6,#ffb703,#fff7d6);
+    background-size:300% 100%; color:#241a00; font-weight:800; animation:rainbowShift 1.6s linear infinite;
+  }
+  .tier-Transcended .aura-name{
+    background:linear-gradient(90deg,#fff7d6,#ffd76a,#ffffff,#ffb703,#fff7d6);
+    background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:rainbowShift 1.6s linear infinite; font-size:28px;
+  }
+  .anim-on .tier-Transcended .aura-glow-ring{animation:pulseGlow .5s ease-in-out infinite, spin 2s linear infinite;}
+  .anim-on .tier-Transcended .aura-stage{animation:secretFlash .9s ease-in-out infinite;}
+  .monarch-counter{
+    font-family:'Sora', sans-serif; font-size:26px; font-weight:800; margin-top:6px;
+    color:#fff7d6; text-shadow:0 0 20px rgba(255,215,100,0.8); font-variant-numeric:tabular-nums;
+  }
+
+  @keyframes pulseGlow{0%,100%{transform:scale(1);} 50%{transform:scale(1.07);}}
+  @keyframes spin{from{transform:rotate(0deg);} to{transform:rotate(360deg);}}
+  @keyframes rainbowShift{0%{background-position:0% 50%;} 100%{background-position:300% 50%;}}
+  @keyframes divineFlash{0%,100%{box-shadow:inset 0 0 0px rgba(255,255,255,0);} 50%{box-shadow:inset 0 0 60px rgba(255,255,255,0.08);}}
+  @keyframes secretFlash{0%,100%{box-shadow:inset 0 0 0px rgba(255,255,255,0);} 50%{box-shadow:inset 0 0 80px rgba(255,255,255,0.16);}}
+
+  .roll-btn{
+    width:100%; border:none; border-radius:18px; padding:18px;
+    background:linear-gradient(135deg, var(--accent), #6d28d9);
+    color:#fff; font-family:'Sora', sans-serif; font-weight:700; font-size:17px;
+    margin-top:16px; cursor:pointer;
+    box-shadow:0 10px 24px -10px rgba(139,92,246,0.7);
+    transition:transform .08s ease;
+  }
+  .roll-btn:active{transform:scale(0.97);}
+  .roll-btn:disabled{opacity:0.5;}
+  .roll-btn .sub{display:block; font-size:11.5px; font-weight:500; opacity:0.85; margin-top:2px;}
+
+  .section-title{
+    font-family:'Sora', sans-serif; font-weight:700; font-size:15px;
+    margin:22px 0 10px; color:var(--text-dim);
+    display:flex; align-items:center; gap:6px;
+  }
+
+  /* ---------- INDEX VIEW ---------- */
+  .search-row{display:flex; gap:8px; margin-bottom:10px;}
+  .search-input{
+    flex:1; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:11px 14px; color:var(--text); font-size:14px; font-family:inherit;
+  }
+  .search-input:focus{outline:none; border-color:var(--accent);}
+  .discover-count{font-size:12.5px; color:var(--text-dim); margin-bottom:12px;}
+  .aura-grid{display:flex; flex-direction:column; gap:8px;}
+  .aura-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .aura-card .left{display:flex; flex-direction:column; gap:3px; min-width:0;}
+  .aura-card .name{font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .aura-card .meta{font-size:11.5px; color:var(--text-dim);}
+  .aura-card .idpill{
+    font-size:10.5px; color:var(--text-dim); font-variant-numeric:tabular-nums;
+    flex-shrink:0;
+  }
+  .aura-card.locked{opacity:0.55;}
+  .aura-card.locked .name{color:var(--text-dim);}
+  .aura-card.locked .meta{color:var(--text-dim);}
+  .not-rolled-tag{font-size:10px; color:var(--text-dim); font-style:italic;}
+  .pager{display:flex; align-items:center; justify-content:space-between; margin-top:14px; gap:10px;}
+  .pager button{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:9px 14px; font-family:inherit; font-weight:600; font-size:13px;
+  }
+  .pager button:disabled{opacity:0.35;}
+  .pager .pageinfo{font-size:12.5px; color:var(--text-dim);}
+
+  .shard-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:6px;}
+  .shard-chip{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:9px 6px; text-align:center;
+  }
+  .shard-chip .sc-icon{font-size:16px;}
+  .shard-chip .sc-count{font-weight:700; font-size:13px; margin-top:2px;}
+  .shard-chip .sc-label{font-size:9.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em;}
+
+  .recipe-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:12px 14px; margin-bottom:8px;
+  }
+  .recipe-card .rc-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .recipe-card .rc-name{font-weight:700; font-size:14px;}
+  .recipe-card .rc-desc{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
+  .recipe-card .rc-cost{font-size:11.5px; color:var(--text-dim); margin-top:8px; line-height:1.6;}
+  .recipe-card .rc-cost .ok{color:var(--c-uncommon);}
+  .recipe-card .rc-cost .bad{color:var(--danger);}
+  .craft-btn{
+    margin-top:8px; width:100%; border:1px solid var(--accent); background:rgba(139,92,246,0.15);
+    color:var(--text); border-radius:10px; padding:9px; font-family:inherit; font-weight:700; font-size:12.5px;
+  }
+  .craft-btn:disabled{opacity:0.35; border-color:var(--line); background:var(--panel-2);}
+  .item-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:11px 14px; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:10px;
+  }
+  .item-card.equipped{border-color:var(--gold); box-shadow:0 0 14px -4px var(--gold);}
+  .item-card .ic-name{font-weight:700; font-size:13.5px;}
+  .item-card .ic-desc{font-size:11px; color:var(--text-dim);}
+  .item-action-btn{
+    flex-shrink:0; border:1px solid var(--line); background:var(--panel-2); color:var(--text);
+    border-radius:10px; padding:8px 12px; font-family:inherit; font-weight:600; font-size:12px;
+  }
+  .item-action-btn.equipped{border-color:var(--gold); color:var(--gold);}
+
+  .ach-tab-row{display:flex; gap:8px; margin-bottom:12px;}
+  .ach-tab{
+    flex:1; border:1px solid var(--line); background:var(--panel); color:var(--text-dim);
+    border-radius:12px; padding:10px; font-family:inherit; font-weight:700; font-size:12.5px;
+  }
+  .ach-tab.active{border-color:var(--accent); color:var(--text); background:rgba(139,92,246,0.15);}
+  .ach-progress{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:12px;
+    padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:12px; text-align:center;
+  }
+  .odds-preview{font-size:12px; color:var(--text-dim); margin:-4px 0 10px 2px;}
+
+  /* ---------- BATTLE VIEW ---------- */
+  .locked-card{
+    background:var(--panel); border:1px dashed var(--line); border-radius:18px;
+    padding:34px 20px; text-align:center; color:var(--text-dim); font-size:14.5px;
+    margin-top:18px;
+  }
+  .locked-card .big{font-size:30px; margin-bottom:10px;}
+  .battle-level{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:14px;
+    padding:12px 16px; margin-bottom:14px;
+  }
+  .battle-level .lv{font-family:'Sora', sans-serif; font-weight:800; font-size:16px;}
+  .score-row{display:flex; align-items:center; justify-content:center; gap:18px; margin:14px 0;}
+  .score-side{text-align:center;}
+  .score-side .who{font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
+  .score-side .pts{font-family:'Sora', sans-serif; font-size:30px; font-weight:800;}
+  .vs{color:var(--text-dim); font-weight:700;}
+
+  .pick-label{font-size:12.5px; color:var(--text-dim); margin:14px 0 6px;}
+  select.aura-select{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; color:var(--text); font-family:inherit; font-size:14px;
+  }
+  .battle-arena{display:flex; gap:10px; margin-top:16px;}
+  .fighter-card{
+    flex:1; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:16px 10px; text-align:center; min-height:120px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  }
+  .fighter-card .who{font-size:10.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
+  .fighter-card .fname{font-weight:700; font-size:13.5px; margin-top:4px;}
+  .fighter-card .fodds{font-size:11px; color:var(--text-dim);}
+  .fighter-card.winner{border-color:var(--gold); box-shadow:0 0 18px -4px var(--gold);}
+  .round-result{text-align:center; font-size:13.5px; color:var(--text-dim); margin-top:12px; min-height:18px;}
+  .primary-btn{
+    width:100%; border:none; border-radius:16px; padding:15px;
+    background:linear-gradient(135deg, var(--accent), #6d28d9);
+    color:#fff; font-family:'Sora', sans-serif; font-weight:700; font-size:15.5px;
+    margin-top:14px; cursor:pointer;
+  }
+  .primary-btn:disabled{opacity:0.4;}
+  .ghost-btn{
+    width:100%; border:1px solid var(--line); border-radius:16px; padding:13px;
+    background:transparent; color:var(--text); font-family:inherit; font-weight:600; font-size:14px;
+    margin-top:10px;
+  }
+  .battle-end{
+    text-align:center; margin-top:18px; padding:20px; border-radius:16px;
+    background:var(--panel); border:1px solid var(--line);
+  }
+  .battle-end .headline{font-family:'Sora', sans-serif; font-size:19px; font-weight:800;}
+  .battle-end .reward{color:var(--gold); font-weight:700; margin-top:6px;}
+
+  /* ---------- SETTINGS VIEW ---------- */
+  .setting-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:13px 16px; margin-bottom:8px;
+  }
+  .setting-row .label{font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px;}
+  .switch{position:relative; width:44px; height:26px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:var(--line); border-radius:999px; transition:.2s; cursor:pointer;}
+  .slider:before{content:""; position:absolute; width:20px; height:20px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+  input:checked + .slider{background:var(--accent);}
+  input:checked + .slider:before{transform:translateX(18px);}
+  .link-row{
+    width:100%; text-align:left; background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:14px 16px; margin-bottom:8px; color:var(--text);
+    font-family:inherit; font-size:14px; font-weight:600; display:flex; align-items:center; justify-content:space-between;
+  }
+  .link-row .chev{color:var(--text-dim);}
+
+  /* modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(4,2,12,0.7); backdrop-filter:blur(3px);
+    display:none; align-items:flex-end; justify-content:center; z-index:50;
+  }
+  .modal-backdrop.active{display:flex;}
+  .modal{
+    width:100%; max-width:480px; background:var(--bg-1); border:1px solid var(--line);
+    border-radius:22px 22px 0 0; padding:20px 20px 30px; max-height:82vh; overflow-y:auto;
+    animation:slideup .25s ease;
+  }
+  @keyframes slideup{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal h2{font-family:'Sora', sans-serif; font-size:18px; margin:0 0 14px;}
+  .modal p{font-size:13.5px; line-height:1.6; color:var(--text-dim); margin:0 0 10px;}
+  .modal .close-x{
+    position:absolute; top:16px; right:20px; background:none; border:none; color:var(--text-dim);
+    font-size:20px; cursor:pointer;
+  }
+  .modal-wrap{position:relative;}
+  .htp-block{margin-bottom:16px;}
+  .htp-block h3{font-size:14px; margin:0 0 4px; color:var(--text);}
+  .admin-input{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; color:var(--text); font-family:inherit; font-size:14px; margin-bottom:10px;
+  }
+  .toast{
+    position:fixed; bottom:96px; left:50%; transform:translateX(-50%);
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:10px 18px; border-radius:999px; font-size:13px; font-weight:600;
+    z-index:60; opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .toast.show{opacity:1;}
+
+  /* ---------- BOTTOM NAV ---------- */
+  nav.bottomnav{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px;
+    background:rgba(13,8,33,0.92); backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+    display:flex; z-index:10;
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav.bottomnav button{
+    flex:1; background:none; border:none; color:var(--text-dim);
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:8px 2px; font-family:inherit; font-size:10.5px; font-weight:600;
+    border-radius:12px; position:relative;
+  }
+  nav.bottomnav button .ic{font-size:19px;}
+  nav.bottomnav button.active{color:var(--text); background:var(--panel-2);}
+  nav.bottomnav button .lockdot{
+    position:absolute; top:4px; right:20%; width:7px; height:7px; border-radius:50%;
+    background:var(--danger);
+  }
+
+  ::-webkit-scrollbar{width:0; height:0;}
+</style>
+</head>
+<body>
+<canvas class="stars" id="starsCanvas"></canvas>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span>Cosmic Rolls</div>
+    <div class="coins-pill"><span class="icon">🪙</span><span id="coinDisplay">0</span></div>
+  </header>
+
+  <main>
+    <!-- ROLL VIEW -->
+    <section class="view active" id="view-roll">
+      <div class="stat-row">
+        <div class="stat-chip">
+          <div class="label">Rolls</div>
+          <div class="value" id="rollCountDisplay">0</div>
+        </div>
+        <div class="stat-chip">
+          <div class="label">Discovered</div>
+          <div class="value" id="discoveredMiniDisplay">0 / 10,000</div>
+        </div>
+        <div class="stat-chip">
+          <div class="label">Luck Lv</div>
+          <div class="value" id="luckLevelDisplay">0</div>
+        </div>
+      </div>
+
+      <div class="equipped-card">
+        <div class="eq-left">
+          <div class="eq-glyph" id="equippedGlyph">🎯</div>
+          <div class="eq-text">
+            <div class="eq-label">Equipped Aura</div>
+            <div class="eq-name" id="equippedName">None</div>
+          </div>
+        </div>
+        <button class="equip-now-btn" id="equipCurrentBtn" style="display:none;">Equip This</button>
+      </div>
+
+      <div class="biome-banner" id="biomeBanner">
+        <div class="bb-top">
+          <div class="bb-name"><span id="biomeIcon">🌌</span> <span id="biomeName">—</span></div>
+          <div class="bb-timer" id="biomeTimer">10:00</div>
+        </div>
+        <div class="bb-desc" id="biomeDesc">Loading biome...</div>
+      </div>
+
+      <div class="aura-stage tier-Common" id="auraStage">
+        <div class="aura-glow-ring" id="auraGlyph">🌌</div>
+        <div id="auraContent">
+          <div class="aura-placeholder">Press ROLL to reveal your first Aura</div>
+        </div>
+      </div>
+
+      <button class="roll-btn" id="rollBtn">
+        ROLL
+        <span class="sub">Free — rarity depends on your Luck</span>
+      </button>
+
+      <button class="luck-btn" id="luckUpgradeBtn">
+        <span>🍀 Increase Luck (Lv <span id="luckNextLevel">1</span>)</span>
+        <span class="lk-cost" id="luckCostDisplay">50 🪙</span>
+      </button>
+
+      <button class="luck-btn" id="mutationUpgradeBtn">
+        <span>🧬 Mutation Chance: <span id="mutationChanceDisplay">2.0%</span></span>
+        <span class="lk-cost" id="mutationCostDisplay">75 🪙</span>
+      </button>
+    </section>
+
+    <!-- INDEX VIEW -->
+    <section class="view" id="view-index">
+      <div class="search-row">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search Aura name...">
+      </div>
+      <div class="discover-count" id="indexCountLabel">Discovered: 0 / 10,000</div>
+      <div class="aura-grid" id="auraGrid"></div>
+      <div class="pager" id="pager">
+        <button id="prevPageBtn">← Prev</button>
+        <span class="pageinfo" id="pageInfo">Page 1</span>
+        <button id="nextPageBtn">Next →</button>
+      </div>
+    </section>
+
+    <!-- BATTLE VIEW -->
+    <section class="view" id="view-battle">
+      <div id="battleLocked" class="locked-card">
+        <div class="big">🔒</div>
+        Discover 3 different Auras to unlock Flex Battle!
+      </div>
+
+      <div id="battleUnlocked" style="display:none;">
+        <div class="battle-level">
+          <div class="lv" id="battleLevelDisplay">NPC Level 1</div>
+          <div style="font-size:12px; color:var(--text-dim);" id="battleRewardHint">Win reward: 25 🪙</div>
+        </div>
+
+        <div id="battleSetup">
+          <div class="pick-label">Choose your Aura to flex</div>
+          <select class="aura-select" id="auraSelect"></select>
+          <button class="primary-btn" id="startBattleBtn">Start Flex Battle</button>
+        </div>
+
+        <div id="battleActive" style="display:none;">
+          <div class="score-row">
+            <div class="score-side"><div class="who">You</div><div class="pts" id="playerScore">0</div></div>
+            <div class="vs">VS</div>
+            <div class="score-side"><div class="who">NPC</div><div class="pts" id="npcScore">0</div></div>
+          </div>
+          <div class="pick-label">Switch Aura before the next round</div>
+          <select class="aura-select" id="auraSelectActive"></select>
+          <div class="battle-arena">
+            <div class="fighter-card" id="playerFighterCard">
+              <div class="who">You</div>
+              <div class="fname">—</div>
+              <div class="fodds">—</div>
+            </div>
+            <div class="fighter-card" id="npcFighterCard">
+              <div class="who">NPC</div>
+              <div class="fname">—</div>
+              <div class="fodds">—</div>
+            </div>
+          </div>
+          <div class="round-result" id="roundResultText"></div>
+          <button class="primary-btn" id="nextRoundBtn">Flex!</button>
+        </div>
+
+        <div id="battleEnd" class="battle-end" style="display:none;">
+          <div class="headline" id="battleEndHeadline">You Win!</div>
+          <div class="reward" id="battleEndReward">+25 Coins</div>
+          <button class="primary-btn" id="continueBattleBtn">Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- INVENTORY / CRAFTING VIEW -->
+    <section class="view" id="view-inventory">
+      <div class="section-title">🧵 Your Materials</div>
+      <div class="shard-grid" id="shardGrid"></div>
+
+      <div class="section-title">🎒 Your Items <span id="slotUsageText" style="font-weight:400; font-size:11px;">0 / 20 slots used</span></div>
+      <button class="ghost-btn" id="upgradeSlotsBtn" style="margin-top:0; margin-bottom:10px;">➕ +10 Slots — 500 🪙</button>
+      <div id="ownedItemsList" class="aura-grid"></div>
+
+      <div class="section-title">📜 Recipes (<span id="recipeCount">56</span>)</div>
+      <div id="recipeList" class="aura-grid"></div>
+    </section>
+
+    <!-- SETTINGS VIEW -->
+    <section class="view" id="view-settings">
+      <div class="setting-row" id="fastRollLockedRow">
+        <div class="label">⚡ Fast Roll (Locked)</div>
+        <button class="item-action-btn" id="unlockFastRollBtn">Unlock — 10,000,000 🪙</button>
+      </div>
+      <div class="setting-row" id="fastRollUnlockedRow" style="display:none;">
+        <div class="label">⚡ Fast Roll</div>
+        <label class="switch"><input type="checkbox" id="toggleFastRoll"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="label">📳 Vibration</div>
+        <label class="switch"><input type="checkbox" id="toggleVibration"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="label">✨ Rare Aura Animations</div>
+        <label class="switch"><input type="checkbox" id="toggleRareAnim"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="label">🔊 Sound Effects</div>
+        <label class="switch"><input type="checkbox" id="toggleSoundEffects"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="label">🎯 Auto-Equip Rarest Pull</div>
+        <label class="switch"><input type="checkbox" id="toggleAutoEquip"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="label">🔔 Rare Pull Alerts</div>
+        <label class="switch"><input type="checkbox" id="toggleRareAlerts"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="label">📊 Show Odds as %</div>
+        <label class="switch"><input type="checkbox" id="toggleOddsPercent"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="label">🔁 Auto-Craft (craft anything affordable)</div>
+        <label class="switch"><input type="checkbox" id="toggleAutoCraft"><span class="slider"></span></label>
+      </div>
+
+      <div class="section-title">More</div>
+      <button class="link-row" id="openDailyQuests">📅 Daily Quests <span class="chev">›</span></button>
+      <button class="link-row" id="openHowToPlay">❓ How to Play <span class="chev">›</span></button>
+      <button class="link-row" id="openAchievements">🏆 Achievements <span class="chev">›</span></button>
+      <button class="link-row" id="openCreateAura">➕ Create Custom Aura <span class="chev">›</span></button>
+      <button class="link-row" id="openAdminPanel">🔐 Admin Panel <span class="chev">›</span></button>
+
+      <div class="section-title">Save Status</div>
+      <div class="setting-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+        <div id="saveStatusText" style="font-size:12.5px; color:var(--text-dim); line-height:1.5;">Checking...</div>
+      </div>
+      <button class="ghost-btn" id="forceSaveBtn">💾 Save Now</button>
+      <button class="ghost-btn" id="resetProgressBtn" style="color:var(--danger); border-color:var(--danger);">🗑️ Reset Progress</button>
+    </section>
+  </main>
+
+  <nav class="bottomnav">
+    <button class="active" data-view="roll"><span class="ic">🎲</span>Roll</button>
+    <button data-view="index"><span class="ic">📖</span>Index</button>
+    <button data-view="battle"><span class="ic">⚔️</span>Battle</button>
+    <button data-view="inventory"><span class="ic">🎒</span>Craft</button>
+    <button data-view="settings"><span class="ic">⚙️</span>Settings</button>
+  </nav>
+</div>
+
+<!-- How to Play modal -->
+<div class="modal-backdrop" id="htpBackdrop">
+  <div class="modal modal-wrap">
+    <button class="close-x" data-close="htpBackdrop">✕</button>
+    <h2>How to Play</h2>
+    <div class="htp-block">
+      <h3>🎲 Rolling</h3>
+      <p>Press ROLL any time — it's free. There are over 10,000 Auras across 9 tiers, from Common up through Secret, plus one absolute one-in-a-lifetime tier above all of them (see MONARCH below). Your Luck level and any active Biome shift the odds toward rarer tiers.</p>
+    </div>
+    <div class="htp-block">
+      <h3>🌍 Biomes</h3>
+      <p>A rotating Biome is always active — shown at the top of the Roll screen — and changes every 10 minutes. Each Biome temporarily boosts one specific tier's odds. Time it right and lean into the boosted tier.</p>
+    </div>
+    <div class="htp-block">
+      <h3>🍀 Luck & 🧬 Mutation Chance</h3>
+      <p>Spend Coins to raise your Luck level (shifts odds toward rarer tiers) and your Mutation Chance (odds that a roll gets a random rarity-multiplying Mutation, like "LUCKY 10x"). Both are separate upgrades on the Roll screen.</p>
+    </div>
+    <div class="htp-block">
+      <h3>👑 MONARCH</h3>
+      <p>One single Aura in the entire game sits in its own Transcended tier at odds of 1 / 3,000,000,000. If you ever roll it, you'll see a number count up live before MONARCH is revealed. Good luck.</p>
+    </div>
+    <div class="htp-block">
+      <h3>🎯 Equip</h3>
+      <p>Equip any Aura you've discovered from the Index, or right after rolling it, to show it off as your main Aura and use it by default in Flex Battle.</p>
+    </div>
+    <div class="htp-block">
+      <h3>📖 Index</h3>
+      <p>The Index shows every Aura and its name, tier, and odds — even ones you haven't rolled yet, so you know what to chase. Search by name.</p>
+    </div>
+    <div class="htp-block">
+      <h3>⚔️ Flex Battle</h3>
+      <p>Unlocks after discovering 3 Auras. Pick an Aura and face an NPC — rarer Aura wins the point (Mutations count too). Switch your Aura between rounds. First to 3 points wins Coins. NPCs get tougher — and occasionally mutated themselves — as your NPC level climbs.</p>
+    </div>
+    <div class="htp-block">
+      <h3>🧵 Crafting & 🎒 Inventory</h3>
+      <p>Rolling earns tier "Shards." Spend Shards + Coins in the Craft tab on 56 recipes — 31 unique Potions (coins, temporary Luck/Mutation boosts, guaranteed tiers, Shard refunds, instant NPC level skips, or the ultimate Heavenly Potion) and 25 Gauntlets (equip one for a permanent battle-reward bonus AND a Luck bonus). Your inventory holds 20 item slots by default, upgradeable up to 200.</p>
+    </div>
+    <div class="htp-block">
+      <h3>➕ Create Custom Aura</h3>
+      <p>Design your own Aura from Settings — name, tier, odds, and colour — and it's instantly added to the Index and rollable.</p>
+    </div>
+    <div class="htp-block">
+      <h3>📅 Daily Quests & 🏆 Achievements</h3>
+      <p>Three quests reset every day for bonus Coins. Achievements (10,000+) auto-unlock as you discover Auras and hit milestones — check Settings for both.</p>
+    </div>
+    <div class="htp-block">
+      <h3>⚡ Quick Roll</h3>
+      <p>An instant, no-animation roll mode — unlockable in Settings for 10,000,000 Coins.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Admin modal -->
+<div class="modal-backdrop" id="adminBackdrop">
+  <div class="modal modal-wrap">
+    <button class="close-x" data-close="adminBackdrop">✕</button>
+    <h2>🔐 Admin Panel</h2>
+    <p>Enter the admin password to unlock testing tools.</p>
+    <input type="password" class="admin-input" id="adminPasswordInput" placeholder="Password">
+    <button class="primary-btn" id="adminSubmitBtn" style="margin-top:0;">Unlock</button>
+    <div id="adminTools" style="display:none; margin-top:16px;">
+      <button class="ghost-btn" id="admin10kBtn">+10,000 Coins</button>
+      <button class="ghost-btn" id="adminSecretBtn">Discover Random Secret Aura</button>
+    </div>
+    <div id="adminMsg" style="font-size:12.5px; color:var(--text-dim); margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- Daily Quests modal -->
+<div class="modal-backdrop" id="dailyQuestsBackdrop">
+  <div class="modal modal-wrap">
+    <button class="close-x" data-close="dailyQuestsBackdrop">✕</button>
+    <h2>📅 Daily Quests</h2>
+    <p>Resets every day. Complete all 3 for bonus Coins!</p>
+    <div id="dailyQuestsList"></div>
+  </div>
+</div>
+
+<!-- Achievements modal -->
+<div class="modal-backdrop" id="achievementsBackdrop">
+  <div class="modal modal-wrap">
+    <button class="close-x" data-close="achievementsBackdrop">✕</button>
+    <h2>🏆 Achievements</h2>
+    <div class="ach-progress" id="achProgressText">Unlocked: 0 / 0</div>
+
+    <div class="ach-tab-row">
+      <button class="ach-tab active" id="achTabMilestones">Milestones</button>
+      <button class="ach-tab" id="achTabAuras">Aura Discoveries</button>
+    </div>
+
+    <div id="achMilestonesPane">
+      <div class="aura-grid" id="achMilestoneList"></div>
+    </div>
+
+    <div id="achAurasPane" style="display:none;">
+      <input type="text" class="search-input" id="achAuraSearch" placeholder="Search Aura achievements..." style="margin-bottom:10px;">
+      <div class="aura-grid" id="achAuraGrid"></div>
+      <div class="pager" id="achAuraPager">
+        <button id="achPrevPage">← Prev</button>
+        <span class="pageinfo" id="achPageInfo">Page 1</span>
+        <button id="achNextPage">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Aura modal -->
+<div class="modal-backdrop" id="createAuraBackdrop">
+  <div class="modal modal-wrap">
+    <button class="close-x" data-close="createAuraBackdrop">✕</button>
+    <h2>➕ Create Custom Aura</h2>
+    <p>Design your own Aura. It's added straight into the Index and can be rolled from its tier's pool.</p>
+    <input type="text" class="admin-input" id="customAuraName" placeholder="Aura name (e.g. Starlight Fang)" maxlength="40">
+    <select class="admin-input" id="customAuraTier">
+      <option value="Common">Common</option>
+      <option value="Uncommon">Uncommon</option>
+      <option value="Rare">Rare</option>
+      <option value="Epic">Epic</option>
+      <option value="Legendary">Legendary</option>
+      <option value="Mythic">Mythic</option>
+      <option value="Divine">Divine</option>
+      <option value="Secret">Secret</option>
+    </select>
+    <p style="margin:0 0 6px; font-size:12px;">Just type the bottom number — e.g. enter <strong>12092</strong> to get odds of <strong>1 / 12,092</strong>. No slash needed, it's added automatically.</p>
+    <input type="number" class="admin-input" id="customAuraOdds" placeholder="e.g. 12092" min="1" step="1" style="margin-bottom:4px;">
+    <div class="odds-preview" id="customOddsPreview">Preview: 1 / —</div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      <label style="font-size:13px; color:var(--text-dim);">Colour:</label>
+      <input type="color" id="customAuraColor" value="#a78bfa" style="width:50px; height:36px; border:none; background:none; border-radius:8px;">
+    </div>
+    <button class="primary-btn" id="createAuraSubmitBtn" style="margin-top:0;">Add Aura</button>
+    <div id="createAuraMsg" style="font-size:12.5px; color:var(--text-dim); margin-top:10px;"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   0. CONFIG / CONSTANTS
+========================================================= */
+const SAVE_KEY = "cosmicRollsSaveV3";
+const TOTAL_AURAS = 10000;
+const ADMIN_PASSWORD = "COSMICROLLISTHEGOAT";
+
+/* popWeight controls how many distinct Auras exist in a tier (variety).
+   weight controls actual roll probability — decoupled so tiers can have a
+   lot of named Auras while still being brutally hard to actually roll. */
+const TIERS = [
+  { name:"Common",     popWeight:53.05, weight:60,      min:2,         max:20,         color:"var(--c-common)" },
+  { name:"Uncommon",   popWeight:24,    weight:22,      min:20,        max:100,        color:"var(--c-uncommon)" },
+  { name:"Rare",       popWeight:14,    weight:10,      min:100,       max:1000,       color:"var(--c-rare)" },
+  { name:"Epic",       popWeight:6,     weight:4,       min:1000,      max:10000,      color:"var(--c-epic)" },
+  { name:"Legendary",  popWeight:2,     weight:1.2,     min:10000,     max:100000,     color:"var(--c-legendary)" },
+  { name:"Mythic",     popWeight:0.45,  weight:0.15,    min:100000,    max:1000000,    color:"var(--c-mythic)" },
+  { name:"Divine",     popWeight:0.2,   weight:0.03,    min:1000000,   max:10000000,   color:"var(--c-divine)" },
+  { name:"Secret",     popWeight:0.3,   weight:0.008,   min:10000000,  max:100000000,  color:"var(--c-secret)" },
+  { name:"Transcended",popWeight:0,     weight:0.0000000333, min:3000000000, max:3000000000, color:"var(--c-transcended)" },
+];
+const TIER_ORDER = TIERS.map(t => t.name);
+function findTierForOdds(odds){
+  for(let i = TIERS.length - 1; i >= 0; i--){
+    if(odds >= TIERS[i].min) return TIERS[i].name;
+  }
+  return TIERS[0].name;
+}
+
+/* Biomes: original rotating environments (not tied to any other game). One is
+   "active" at a time, shared by everyone since it's derived from the clock,
+   and it rotates every 10 minutes, temporarily boosting one tier's odds. */
+const BIOMES = [
+  { name:"Solar Flare",    icon:"☀️", color:"#f6ae2d", boostTier:"Rare",      desc:"Warm radiation thickens the mid-rarity currents." },
+  { name:"Void Rift",      icon:"🕳️", color:"#a855f7", boostTier:"Epic",      desc:"Reality thins — Epic Auras surge through the tear." },
+  { name:"Crystal Cavern", icon:"💎", color:"#38bdf8", boostTier:"Uncommon",  desc:"Resonant crystals amplify Uncommon frequencies." },
+  { name:"Storm Front",    icon:"⛈️", color:"#4ade80", boostTier:"Legendary", desc:"Electrical chaos charges Legendary manifestations." },
+  { name:"Ember Wastes",   icon:"🔥", color:"#f45d7a", boostTier:"Common",    desc:"A dry, familiar heat. Nothing unusual stirs." },
+  { name:"Frozen Reach",   icon:"❄️", color:"#eaf6ff", boostTier:"Divine",    desc:"Absolute stillness lets Divine echoes surface." },
+  { name:"Nebula Drift",   icon:"🌌", color:"#8b5cf6", boostTier:"Mythic",    desc:"Star-dust swirls, thick with Mythic potential." },
+  { name:"Overgrowth",     icon:"🌿", color:"#4ade80", boostTier:"Uncommon",  desc:"Life spreads fast, and so does the unusual." },
+  { name:"Static Field",   icon:"⚡", color:"#22d3ee", boostTier:"Rare",      desc:"Charged air distorts probability — Rare spikes." },
+  { name:"Twilight Veil",  icon:"🌗", color:"#f472b6", boostTier:"Mythic",    desc:"Between day and night, Mythic things slip through." },
+  { name:"Radiant Bloom",  icon:"🌸", color:"#fbbf24", boostTier:"Epic",      desc:"Everything blooms brighter — Epic included." },
+  { name:"Abyssal Trench", icon:"🐙", color:"#9ca3af", boostTier:"Secret",    desc:"Crushing depths hide the rarest Secrets." },
+];
+const BIOME_ROTATE_MS = 10 * 60 * 1000;
+const BIOME_BOOST_MULT = 1.6;
+function getCurrentBiomeIndex(){ return Math.floor(Date.now() / BIOME_ROTATE_MS) % BIOMES.length; }
+function getCurrentBiome(){ return BIOMES[getCurrentBiomeIndex()]; }
+function msUntilNextBiome(){ return BIOME_ROTATE_MS - (Date.now() % BIOME_ROTATE_MS); }
+
+let lastRenderedBiomeIndex = -1;
+function renderBiomeBanner(){
+  const biome = getCurrentBiome();
+  const idx = getCurrentBiomeIndex();
+  if(idx !== lastRenderedBiomeIndex){
+    lastRenderedBiomeIndex = idx;
+    document.getElementById("biomeIcon").textContent = biome.icon;
+    document.getElementById("biomeName").textContent = biome.name;
+    document.getElementById("biomeDesc").textContent = biome.desc + " (+" + Math.round((BIOME_BOOST_MULT-1)*100) + "% " + biome.boostTier + " odds)";
+    document.getElementById("biomeBanner").style.setProperty("--biome-color", biome.color);
+  }
+  const msLeft = msUntilNextBiome();
+  const totalSec = Math.ceil(msLeft / 1000);
+  const mm = Math.floor(totalSec / 60);
+  const ss = totalSec % 60;
+  document.getElementById("biomeTimer").textContent = mm + ":" + (ss < 10 ? "0" : "") + ss;
+}
+setInterval(renderBiomeBanner, 1000);
+
+/* Mutations: 100 names x 10 multipliers = 1000+ possible mutations that can
+   land on a rolled Aura, multiplying its effective rarity for display/battles. */
+const MUTATION_NAMES = ["Lucky","Shiny","Chaotic","Corrupted","Overcharged","Ascended","Blessed","Cursed","Radiant","Twisted",
+  "Volatile","Ethereal","Frenzied","Pristine","Feral","Celestial","Inverted","Prismatic","Molten","Frozen",
+  "Static","Turbulent","Serene","Manic","Glorious","Wretched","Infernal","Arcane","Primal","Void-Touched",
+  "Starborn","Nebulous","Fractured","Unstable","Resplendent","Grim","Vivid","Silent","Roaring","Feverish",
+  "Solemn","Wild","Gilded","Tarnished","Luminous","Shadowed","Electric","Glacial","Scorched","Verdant",
+  "Crimson-Kissed","Azure-Kissed","Golden","Iron-Forged","Diamond","Obsidian","Crystalline","Phantom","Spectral","Ghostly",
+  "Astral","Cosmic","Quantum","Novaborn","Eclipsed","Auroral","Tempestuous","Cyclonic","Seismic","Thunderous",
+  "Whispering","Screaming","Blazing","Freezing","Melting","Warping","Bending","Twisting","Shattered","Reforged",
+  "Reborn","Ascendant","Transcendent","Enlightened","Awakened","Dormant","Slumbering","Untamed","Savage","Gentle",
+  "Ordered","Harmonic","Dissonant","Rippling","Burning","Withering","Blooming","Sundered","Hollow","Boundless"];
+const MUTATION_MULTIPLIERS = [2,3,5,10,15,20,25,50,75,100];
+const MUTATIONS = [];
+MUTATION_NAMES.forEach(name => MUTATION_MULTIPLIERS.forEach(mult => MUTATIONS.push({ name, mult })));
+
+/* Crafting: 55 recipes (30 potions + 25 gauntlets) across 5 difficulty bands,
+   plus 1 unique endgame potion. Each recipe needs Coins plus tier "shards"
+   earned from rolling. Potions each have one of 6 distinct effects. */
+const POTION_NAMES = ["Potion of Vigor","Potion of Swift Rolls","Elixir of Fortune","Potion of Clarity","Brew of the Void",
+  "Potion of Radiance","Elixir of Chaos","Potion of Serenity","Brew of Embers","Potion of Frost",
+  "Elixir of Storms","Potion of Shadows","Brew of Light","Potion of Gravity","Elixir of Time",
+  "Potion of Echoes","Brew of Stars","Potion of Dust","Elixir of Ash","Potion of Bloom",
+  "Brew of Thorns","Potion of Mist","Elixir of Iron","Potion of Gold","Brew of Silver",
+  "Potion of Glass","Elixir of Smoke","Potion of Flame","Brew of Ice","Potion of Wind"];
+const GAUNTLET_NAMES = ["Gauntlet of Might","Gauntlet of the Void","Iron Gauntlet","Golden Gauntlet","Gauntlet of Storms",
+  "Gauntlet of Embers","Gauntlet of Frost","Gauntlet of Shadows","Gauntlet of Light","Gauntlet of Chaos",
+  "Gauntlet of Order","Gauntlet of Time","Gauntlet of Space","Gauntlet of Stars","Gauntlet of the Ancients",
+  "Gauntlet of Fury","Gauntlet of Peace","Gauntlet of Wrath","Gauntlet of Calm","Gauntlet of the Cosmos",
+  "Gauntlet of Eternity","Gauntlet of the Void King","Gauntlet of Dawn","Gauntlet of Dusk","Gauntlet of the Deep"];
+const CRAFT_BANDS = [
+  { shards:{ Common:5 },                coins:20,    gauntletBonusPct:5,  gauntletLuck:1,  potionCoins:30,    luckBoost:1,  mutBoost:5,  guaranteeTier:"Uncommon", shardRefundTier:"Common",    shardRefundAmt:10, battleSkip:1 },
+  { shards:{ Common:8, Uncommon:3 },     coins:100,   gauntletBonusPct:10, gauntletLuck:3,  potionCoins:150,   luckBoost:2,  mutBoost:10, guaranteeTier:"Rare",     shardRefundTier:"Uncommon",  shardRefundAmt:8,  battleSkip:1 },
+  { shards:{ Uncommon:6, Rare:2 },       coins:500,   gauntletBonusPct:20, gauntletLuck:6,  potionCoins:750,   luckBoost:4,  mutBoost:20, guaranteeTier:"Epic",     shardRefundTier:"Rare",      shardRefundAmt:6,  battleSkip:2 },
+  { shards:{ Rare:5, Epic:2 },           coins:2500,  gauntletBonusPct:35, gauntletLuck:12, potionCoins:3750,  luckBoost:8,  mutBoost:35, guaranteeTier:"Legendary",shardRefundTier:"Epic",      shardRefundAmt:4,  battleSkip:3 },
+  { shards:{ Epic:5, Legendary:1 },      coins:10000, gauntletBonusPct:60, gauntletLuck:20, potionCoins:18750, luckBoost:15, mutBoost:50, guaranteeTier:"Mythic",   shardRefundTier:"Legendary", shardRefundAmt:2,  battleSkip:5 },
+];
+const POTION_EFFECT_TYPES = ["coins","luckBoost","mutationBoost","guaranteedTier","shardRefund","battleLevelSkip"];
+const ITEMS = [];
+(function buildItems(){
+  let id = 1;
+  POTION_NAMES.forEach((name, i) => {
+    const band = CRAFT_BANDS[Math.floor(i / 6)];
+    const effectType = POTION_EFFECT_TYPES[i % 6];
+    let description, effectValue, effectTier;
+    switch(effectType){
+      case "coins":
+        effectValue = band.potionCoins;
+        description = "Consume for +" + fmt(band.potionCoins) + " Coins.";
+        break;
+      case "luckBoost":
+        effectValue = band.luckBoost;
+        description = "Consume for +" + band.luckBoost + " Luck for your next 5 rolls.";
+        break;
+      case "mutationBoost":
+        effectValue = band.mutBoost;
+        description = "Consume for +" + band.mutBoost + "% Mutation Chance for your next 5 rolls.";
+        break;
+      case "guaranteedTier":
+        effectValue = band.guaranteeTier;
+        description = "Consume to guarantee your next roll is " + band.guaranteeTier + " tier.";
+        break;
+      case "shardRefund":
+        effectValue = band.shardRefundAmt;
+        effectTier = band.shardRefundTier;
+        description = "Consume for +" + band.shardRefundAmt + " " + band.shardRefundTier + " Shards.";
+        break;
+      case "battleLevelSkip":
+        effectValue = band.battleSkip;
+        description = "Consume to instantly skip +" + band.battleSkip + " Flex Battle NPC level" + (band.battleSkip>1?"s":"") + ".";
+        break;
+    }
+    ITEMS.push({
+      id: "potion_" + id++, name, type:"potion", icon:"🧪",
+      shards: band.shards, coins: band.coins,
+      effectType, effectValue, effectTier,
+      description,
+    });
+  });
+  let gid = 1;
+  GAUNTLET_NAMES.forEach((name, i) => {
+    const band = CRAFT_BANDS[Math.floor(i / 5)];
+    ITEMS.push({
+      id: "gauntlet_" + gid++, name, type:"gauntlet", icon:"🥊",
+      shards: band.shards, coins: band.coins,
+      rewardBonusPct: band.gauntletBonusPct,
+      luckBonus: band.gauntletLuck,
+      description: "Equip for +" + band.gauntletBonusPct + "% Flex Battle rewards and +" + band.gauntletLuck + " Luck.",
+    });
+  });
+  ITEMS.push({
+    id: "potion_heavenly", name: "Heavenly Potion", type:"potion", icon:"🕊️",
+    shards: { Divine: 25 }, coins: 500000,
+    effectType: "permanentLuck", effectValue: 150000,
+    description: "The ultimate brew. Consume for a permanent +150,000 Luck.",
+  });
+})();
+const ITEMS_BY_ID = new Map(ITEMS.map(it => [it.id, it]));
+
+/* Achievements: ~80 handcrafted milestones, plus one auto-generated "Discover X"
+   achievement per Aura in the game (10,000+), for 10,000+ achievements total. */
+const MILESTONES = [];
+(function buildMilestones(){
+  const rollTargets = [1,10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000];
+  rollTargets.forEach(n => MILESTONES.push({
+    name: "Roll " + fmt(n) + "x", desc: "Roll the dice " + fmt(n) + " time" + (n>1?"s":"") + ".",
+    check: s => s.rollCount >= n,
+  }));
+
+  const discoverTargets = [1,5,10,25,50,100,250,500,1000,2500,5000,7500,10000];
+  discoverTargets.forEach(n => MILESTONES.push({
+    name: "Discover " + fmt(n) + " Auras", desc: "Have " + fmt(n) + " unique Auras in your Index.",
+    check: s => s.discovered.size >= n,
+  }));
+
+  ["Uncommon","Rare","Epic","Legendary","Mythic","Divine","Secret"].forEach(tier => {
+    MILESTONES.push({
+      name: "First " + tier, desc: "Discover your first " + tier + " Aura.",
+      check: s => AURAS_BY_TIER[tier].some(a => s.discovered.has(a.id)),
+    });
+  });
+  [["Legendary",10],["Legendary",50],["Mythic",5],["Mythic",25],["Divine",3],["Divine",10],["Secret",1]].forEach(([tier,n]) => {
+    MILESTONES.push({
+      name: "Discover " + n + " " + tier, desc: "Discover " + n + " different " + tier + " Auras.",
+      check: s => AURAS_BY_TIER[tier].filter(a => s.discovered.has(a.id)).length >= n,
+    });
+  });
+
+  const luckTargets = [1,5,10,20,30,50,75,100];
+  luckTargets.forEach(n => MILESTONES.push({
+    name: "Luck Level " + n, desc: "Reach Luck Level " + n + ".",
+    check: s => s.luckLevel >= n,
+  }));
+
+  const mutTargets = [1,5,10,20,30];
+  mutTargets.forEach(n => MILESTONES.push({
+    name: "Mutation Level " + n, desc: "Reach Mutation Chance Level " + n + ".",
+    check: s => s.mutationLevel >= n,
+  }));
+
+  [[1,"Find your first Mutation"],[10,"Find a 10x+ Mutation"],[50,"Find a 50x+ Mutation"],[100,"Find a 100x Mutation"]].forEach(([mult,name],idx) => {
+    if(idx === 0){
+      MILESTONES.push({ name, desc: "Roll an Aura with any mutation.", check: s => s.totalMutationsFound >= 1 });
+    } else {
+      MILESTONES.push({ name, desc: "Find a mutation of at least " + mult + "x.", check: s => s.bestMutationMult >= mult });
+    }
+  });
+
+  MILESTONES.push({ name:"First Victory", desc:"Win your first Flex Battle.", check: s => s.battleWinsTotal >= 1 });
+  [5,10,25,50,100,250,500,1000].forEach(n => MILESTONES.push({
+    name: "NPC Level " + n, desc: "Reach NPC Level " + n + " in Flex Battle.",
+    check: s => s.battleLevel >= n,
+  }));
+
+  MILESTONES.push({ name:"First Craft", desc:"Craft your first item.", check: s => s.totalCrafted >= 1 });
+  MILESTONES.push({ name:"Master Crafter", desc:"Craft 10 items.", check: s => s.totalCrafted >= 10 });
+  MILESTONES.push({ name:"Potion Collector", desc:"Craft every Potion recipe at least once.",
+    check: s => ITEMS.filter(i=>i.type==="potion").every(i => !!s.craftedEver[i.id]) });
+  MILESTONES.push({ name:"Gauntlet Collector", desc:"Craft every Gauntlet recipe at least once.",
+    check: s => ITEMS.filter(i=>i.type==="gauntlet").every(i => !!s.craftedEver[i.id]) });
+  MILESTONES.push({ name:"Armed Up", desc:"Equip a Gauntlet.", check: s => !!s.equippedGauntletId });
+
+  [100,1000,10000,100000,1000000].forEach(n => MILESTONES.push({
+    name: "Earn " + fmt(n) + " Coins", desc: "Earn a total of " + fmt(n) + " Coins over time.",
+    check: s => s.totalCoinsEarned >= n,
+  }));
+
+  MILESTONES.push({ name:"Aura Artisan", desc:"Create your first Custom Aura.", check: s => s.customAuras.length >= 1 });
+  MILESTONES.push({ name:"Equipped", desc:"Equip your first Aura.", check: s => !!s.equippedAuraId });
+})();
+
+function achievementTotal(){ return MILESTONES.length + AURAS.length; }
+function achievementUnlockedCount(){
+  return MILESTONES.filter(m => m.check(state)).length + state.discovered.size;
+}
+
+/* Daily Quests: 3 random quests per day, tracked against a baseline snapshot
+   taken when the quests are assigned, resetting automatically at midnight. */
+const QUEST_POOL = [
+  { id:"roll20", type:"rolls", target:20, reward:200, label: "Roll 20 times" },
+  { id:"roll50", type:"rolls", target:50, reward:500, label: "Roll 50 times" },
+  { id:"roll100", type:"rolls", target:100, reward:1000, label: "Roll 100 times" },
+  { id:"discover1", type:"discoveries", target:1, reward:150, label: "Discover 1 new Aura" },
+  { id:"discover3", type:"discoveries", target:3, reward:400, label: "Discover 3 new Auras" },
+  { id:"discover5", type:"discoveries", target:5, reward:700, label: "Discover 5 new Auras" },
+  { id:"battlewin1", type:"battleWins", target:1, reward:300, label: "Win 1 Flex Battle" },
+  { id:"battlewin3", type:"battleWins", target:3, reward:800, label: "Win 3 Flex Battles" },
+  { id:"craft1", type:"crafts", target:1, reward:250, label: "Craft 1 item" },
+  { id:"craft3", type:"crafts", target:3, reward:600, label: "Craft 3 items" },
+  { id:"mutation1", type:"mutations", target:1, reward:350, label: "Find 1 Mutation" },
+  { id:"luckup1", type:"luckUpgrades", target:1, reward:300, label: "Upgrade Luck once" },
+];
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+}
+function getQuestStatValue(type){
+  switch(type){
+    case "rolls": return state.rollCount;
+    case "discoveries": return state.discovered.size;
+    case "battleWins": return state.battleWinsTotal;
+    case "crafts": return state.totalCrafted;
+    case "mutations": return state.totalMutationsFound;
+    case "luckUpgrades": return state.luckLevel;
+    default: return 0;
+  }
+}
+function ensureDailyQuests(){
+  const key = todayKey();
+  if(!state.dailyQuests || state.dailyQuests.dateKey !== key){
+    const shuffled = [...QUEST_POOL].sort(() => Math.random() - 0.5).slice(0, 3);
+    state.dailyQuests = {
+      dateKey: key,
+      quests: shuffled.map(q => ({ ...q, baseline: getQuestStatValue(q.type) })),
+      claimed: [false, false, false],
+    };
+    scheduleSave();
+  }
+}
+function questProgress(q){
+  return Math.max(0, getQuestStatValue(q.type) - q.baseline);
+}
+
+
+
+const NAME_BANKS = {
+  Common: { adjectives:["Dusty","Faint","Pale","Soft","Dim","Quiet","Small","Plain","Mild","Gentle","Steady","Calm","Loose","Simple","Muted"],
+             nouns:["Spark","Glow","Drift","Breeze","Ember","Flicker","Wisp","Dust","Ripple","Glimmer","Pebble","Fizz","Static","Puff","Gleam"] },
+  Uncommon: { adjectives:["Bright","Vivid","Bold","Sharp","Swift","Lively","Keen","Brisk","Charged","Wired","Zesty","Electric","Neon","Humming","Quickened"],
+             nouns:["Bolt","Flash","Surge","Pulse","Beam","Streak","Current","Circuit","Spiral","Comet","Flare","Shard","Crackle","Gust","Chime"] },
+  Rare: { adjectives:["Crimson","Azure","Golden","Silver","Obsidian","Emerald","Crystal","Frozen","Molten","Shadow","Stellar","Lunar","Solar","Arctic","Volcanic"],
+          nouns:["Phantom","Specter","Fang","Talon","Wing","Core","Nova","Eclipse","Nebula","Aurora","Tempest","Cyclone","Inferno","Glacier","Mirage"] },
+  Epic: { adjectives:["Cosmic","Astral","Ethereal","Celestial","Quantum","Dimensional","Infernal","Abyssal","Radiant","Void","Chaotic","Ancient","Eternal","Primal","Warped"],
+          nouns:["Reaper","Warden","Sovereign","Phoenix","Leviathan","Behemoth","Titan","Wraith","Harbinger","Oracle","Djinn","Colossus","Seraph","Paragon","Ascendant"] },
+  Legendary: { adjectives:["Godly","Mythical","Transcendent","Hallowed","Sacred","Forsaken","Unbound","Timeless","Infinite","Boundless","Immortal","Supreme","Exalted","Resplendent","Undying"],
+          nouns:["Dominion","Genesis","Apocalypse","Singularity","Oblivion","Zenith","Eon","Cataclysm","Revelation","Ascension","Nemesis","Paradox","Ragnarok","Elysium","Calamity"] },
+  Mythic: { adjectives:["Unfathomable","Incomprehensible","Otherworldly","Interdimensional","Reality-Bending","Existential","Paradoxical","Forbidden","Unspeakable","Enigmatic"],
+          nouns:["Voidwalker","Realitybreaker","Starforge","Worldender","Timeweaver","Dreameater","Soulreaper","Fatebinder","Chaosbringer","Godkiller"] },
+  Divine: { curated:["Divine Ascendancy","Divine Genesis","Divine Eternity","Divine Infinity","Divine Zenith","Divine Paragon","Divine Sovereign","Divine Transcendence",
+                      "Divine Omniscience","Divine Apotheosis","Divine Providence","Divine Communion"] },
+  Secret: { curated:["The First Light","The Last Star","Origin","Singularity Prime","Beyond","Genesis Eternal","The Nameless One","Infinity's Edge",
+                      "The Forgotten God","Eclipse of Eternity","The Silent Cosmos","World Seed","The Final Bloom","Null and Void","The Watcher Above",
+                      "事象の外側 (Outer Phenomenon)","The Unwritten","Absolute Zero Point","The Last Question","Everything, Once",
+                      "The Blinding Truth","Zero Hour","The Devourer of Light","Paradise Lost","The Architect","Beyond Comprehension",
+                      "The Silent Choir","World's End","The Unmade","Echo of Creation","The Final Dawn","Nothing and Everything",
+                      "The Sovereign Void","Last Light of Home","The Author"] },
+};
+
+/* =========================================================
+   1. SEEDED RNG + AURA GENERATION (deterministic world)
+========================================================= */
+function mulberry32(seed){
+  let t = seed >>> 0;
+  return function(){
+    t |= 0; t = (t + 0x6D2B79F5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const ROMAN = [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];
+function toRoman(num){
+  let out = "";
+  for(const [v,s] of ROMAN){ while(num >= v){ out += s; num -= v; } }
+  return out || "I";
+}
+
+function computeCounts(){
+  const counts = {};
+  let sum = 0;
+  TIERS.forEach((t,i) => {
+    if(i === TIERS.length - 1) return;
+    const c = Math.round(t.popWeight / 100 * TOTAL_AURAS);
+    counts[t.name] = c;
+    sum += c;
+  });
+  counts[TIERS[TIERS.length-1].name] = TOTAL_AURAS - sum;
+  return counts;
+}
+
+function generateName(tier, rng, usedNames){
+  const bank = NAME_BANKS[tier.name];
+  let base;
+  if(bank.curated){
+    base = bank.curated[Math.floor(rng() * bank.curated.length)];
+  } else {
+    const adj = bank.adjectives[Math.floor(rng() * bank.adjectives.length)];
+    const noun = bank.nouns[Math.floor(rng() * bank.nouns.length)];
+    base = adj + " " + noun;
+  }
+  let name = base;
+  let attempt = 1;
+  while(usedNames.has(name)){
+    attempt++;
+    name = base + " " + toRoman(attempt);
+  }
+  usedNames.add(name);
+  return name;
+}
+
+function generateAuras(){
+  const rng = mulberry32(cosmicSeed(1337));
+  const counts = computeCounts();
+  const usedNames = new Set();
+  let list = [];
+  let idCounter = 1;
+
+  TIERS.forEach(tier => {
+    const n = counts[tier.name];
+    for(let i = 0; i < n; i++){
+      const name = generateName(tier, rng, usedNames);
+      const t = rng();
+      // exponential interpolation across the tier's odds range for a natural spread
+      const odds = Math.round(tier.min * Math.pow(tier.max / tier.min, t));
+      list.push({ id: idCounter++, name, tier: tier.name, odds, color: tier.color });
+    }
+  });
+
+  // shuffle deterministically so tiers are mixed across the ID space, then reassign sequential IDs
+  for(let i = list.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  list.forEach((a, idx) => { a.id = idx + 1; });
+  list.sort((a,b) => a.id - b.id);
+  return list;
+}
+function cosmicSeed(n){ return n; }
+
+const AURAS = generateAuras();
+const AURAS_BY_ID = new Map(AURAS.map(a => [a.id, a]));
+const AURAS_BY_TIER = {};
+TIER_ORDER.forEach(t => AURAS_BY_TIER[t] = AURAS.filter(a => a.tier === t));
+
+/* MONARCH: one Common Aura slot is repurposed into the single Transcended
+   Aura in the game — astronomically rare, revealed with a special animation. */
+(function crownMonarch(){
+  const monarch = AURAS_BY_TIER["Common"][0];
+  monarch.name = "MONARCH";
+  monarch.tier = "Transcended";
+  monarch.odds = 3000000000;
+  monarch.color = "var(--c-transcended)";
+  monarch.isMonarch = true;
+  AURAS_BY_TIER["Common"].shift();
+  AURAS_BY_TIER["Transcended"].push(monarch);
+})();
+
+function totalAuraCount(){ return AURAS.length; }
+
+let nextCustomAuraId = 900000001;
+function addCustomAura({ name, tier, odds, color }, opts){
+  opts = opts || {};
+  const id = opts.id || nextCustomAuraId++;
+  if(opts.id && opts.id >= nextCustomAuraId) nextCustomAuraId = opts.id + 1;
+  const aura = { id, name, tier, odds, color: "var(--c-common)", customColor: color || null, custom: true };
+  AURAS.push(aura);
+  AURAS_BY_ID.set(id, aura);
+  if(!AURAS_BY_TIER[tier]) AURAS_BY_TIER[tier] = [];
+  AURAS_BY_TIER[tier].push(aura);
+  return aura;
+}
+
+/* =========================================================
+   2. STATE
+========================================================= */
+let state = {
+  coins: 50,
+  rollCount: 0,
+  discovered: new Set(),
+  currentAuraId: null,
+  equippedAuraId: null,
+  currentMutation: null,
+  equippedMutation: null,
+  luckLevel: 0,
+  mutationLevel: 0,
+  battleLevel: 1,
+  tierShards: { Common:0, Uncommon:0, Rare:0, Epic:0, Legendary:0, Mythic:0, Divine:0, Secret:0, Transcended:0 },
+  inventory: {},
+  craftedEver: {},
+  equippedGauntletId: null,
+  customAuras: [],
+  totalCoinsEarned: 50,
+  totalCrafted: 0,
+  totalMutationsFound: 0,
+  bestMutationMult: 0,
+  battleWinsTotal: 0,
+  tempLuckBonus: 0,
+  tempLuckRolls: 0,
+  tempMutationBonus: 0,
+  tempMutationRolls: 0,
+  forcedNextTier: null,
+  inventorySlots: 20,
+  fastRollUnlocked: false,
+  dailyQuests: null,
+  settings: {
+    fastRoll:false, vibration:true, rareAnim:true,
+    soundEffects:true, autoEquipRarest:false, rarePullAlerts:true, showOddsAsPercent:false,
+    autoCraft:false,
+  },
+};
+
+/* Storage: prefer the Claude artifact storage API when present (window.storage),
+   but fall back to localStorage so the game still saves when opened as a
+   standalone page in a regular mobile browser. */
+function hasArtifactStorage(){
+  return !!(window.storage && typeof window.storage.get === "function" && typeof window.storage.set === "function");
+}
+function hasLocalStorage(){
+  try{
+    const k = "__cosmic_test__";
+    window.localStorage.setItem(k, "1");
+    window.localStorage.removeItem(k);
+    return true;
+  } catch(e){ return false; }
+}
+function resolveStore(){
+  if(hasArtifactStorage()) return { backend: "artifact", api: window.storage };
+  if(hasLocalStorage()) return { backend: "local", api: LocalStore };
+  return { backend: "none", api: null };
+}
+
+let saveTimer = null;
+function scheduleSave(){
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveGame, 350);
+}
+
+let lastSaveStatus = "Not saved yet";
+function updateSaveStatusUI(){
+  const el = document.getElementById("saveStatusText");
+  if(el) el.textContent = lastSaveStatus;
+}
+
+async function saveGame(){
+  const { backend, api } = resolveStore();
+  if(!api){
+    lastSaveStatus = "⚠️ No storage available in this browser (try leaving private/incognito mode)";
+    updateSaveStatusUI();
+    return;
+  }
+  try{
+    const payload = {
+      coins: state.coins,
+      rollCount: state.rollCount,
+      discovered: Array.from(state.discovered),
+      currentAuraId: state.currentAuraId,
+      equippedAuraId: state.equippedAuraId,
+      currentMutation: state.currentMutation,
+      equippedMutation: state.equippedMutation,
+      luckLevel: state.luckLevel,
+      mutationLevel: state.mutationLevel,
+      battleLevel: state.battleLevel,
+      tierShards: state.tierShards,
+      inventory: state.inventory,
+      craftedEver: state.craftedEver,
+      equippedGauntletId: state.equippedGauntletId,
+      customAuras: state.customAuras,
+      tempLuckBonus: state.tempLuckBonus,
+      tempLuckRolls: state.tempLuckRolls,
+      tempMutationBonus: state.tempMutationBonus,
+      tempMutationRolls: state.tempMutationRolls,
+      forcedNextTier: state.forcedNextTier,
+      inventorySlots: state.inventorySlots,
+      fastRollUnlocked: state.fastRollUnlocked,
+      dailyQuests: state.dailyQuests,
+      totalCoinsEarned: state.totalCoinsEarned,
+      totalCrafted: state.totalCrafted,
+      totalMutationsFound: state.totalMutationsFound,
+      bestMutationMult: state.bestMutationMult,
+      battleWinsTotal: state.battleWinsTotal,
+      settings: state.settings,
+    };
+    await api.set(SAVE_KEY, JSON.stringify(payload));
+    lastSaveStatus = "✅ Saved (" + backend + " storage) at " + new Date().toLocaleTimeString();
+  } catch(e){
+    console.error("Cosmic Rolls: save failed", e);
+    lastSaveStatus = "⚠️ Save failed: " + (e && e.message ? e.message : "unknown error");
+  }
+  updateSaveStatusUI();
+}
+
+async function loadGame(){
+  const { backend, api } = resolveStore();
+  try{
+    if(api){
+      const res = await api.get(SAVE_KEY);
+      if(res && res.value){
+        const data = JSON.parse(res.value);
+        state.coins = typeof data.coins === "number" ? data.coins : 50;
+        state.rollCount = data.rollCount || 0;
+        state.discovered = new Set(data.discovered || []);
+        state.currentAuraId = data.currentAuraId || null;
+        state.equippedAuraId = data.equippedAuraId || null;
+        state.currentMutation = data.currentMutation || null;
+        state.equippedMutation = data.equippedMutation || null;
+        state.luckLevel = data.luckLevel || 0;
+        state.mutationLevel = data.mutationLevel || 0;
+        state.battleLevel = data.battleLevel || 1;
+        state.tierShards = Object.assign({ Common:0, Uncommon:0, Rare:0, Epic:0, Legendary:0, Mythic:0, Divine:0, Secret:0, Transcended:0 }, data.tierShards || {});
+        state.inventory = data.inventory || {};
+        state.craftedEver = data.craftedEver || {};
+        state.equippedGauntletId = data.equippedGauntletId || null;
+        state.customAuras = data.customAuras || [];
+        state.tempLuckBonus = data.tempLuckBonus || 0;
+        state.tempLuckRolls = data.tempLuckRolls || 0;
+        state.tempMutationBonus = data.tempMutationBonus || 0;
+        state.tempMutationRolls = data.tempMutationRolls || 0;
+        state.forcedNextTier = data.forcedNextTier || null;
+        state.inventorySlots = data.inventorySlots || 20;
+        state.fastRollUnlocked = !!data.fastRollUnlocked;
+        state.dailyQuests = data.dailyQuests || null;
+        state.totalCoinsEarned = typeof data.totalCoinsEarned === "number" ? data.totalCoinsEarned : 50;
+        state.totalCrafted = data.totalCrafted || 0;
+        state.totalMutationsFound = data.totalMutationsFound || 0;
+        state.bestMutationMult = data.bestMutationMult || 0;
+        state.battleWinsTotal = data.battleWinsTotal || 0;
+        state.customAuras.forEach(c => {
+          if(!AURAS_BY_ID.has(c.id)) addCustomAura(c, { id: c.id });
+        });
+        state.settings = Object.assign({
+          fastRoll:false, vibration:true, rareAnim:true,
+          soundEffects:true, autoEquipRarest:false, rarePullAlerts:true, showOddsAsPercent:false,
+        }, data.settings || {});
+        lastSaveStatus = "✅ Loaded existing save (" + backend + " storage)";
+      } else {
+        lastSaveStatus = "No existing save found (" + backend + " storage) — starting fresh";
+      }
+    } else {
+      lastSaveStatus = "⚠️ No storage available in this browser (try leaving private/incognito mode)";
+    }
+  } catch(e){
+    lastSaveStatus = "No existing save found (" + backend + " storage) — starting fresh";
+  }
+  updateSaveStatusUI();
+  applySettingsToUI();
+  renderAll();
+}
+
+window.addEventListener("beforeunload", () => { saveGame(); });
+window.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden") saveGame();
+});
+/* Fully automatic autosave — runs on its own every few seconds regardless of
+   any specific action, on top of the save-after-every-change behavior above. */
+setInterval(saveGame, 6000);
+
+/* =========================================================
+   3. UTIL
+========================================================= */
+function fmt(n){ return n.toLocaleString("en-US"); }
+function gainCoins(amount){
+  state.coins += amount;
+  state.totalCoinsEarned += amount;
+}
+function oddsLabel(o){
+  if(state.settings.showOddsAsPercent){
+    const pct = 100 / o;
+    const digits = pct < 0.001 ? 6 : pct < 0.1 ? 4 : pct < 1 ? 2 : 1;
+    return pct.toFixed(digits) + "%";
+  }
+  return "1 / " + fmt(o);
+}
+
+function vibrate(ms){
+  if(state.settings.vibration && navigator.vibrate){
+    try{ navigator.vibrate(ms); }catch(e){}
+  }
+}
+
+let toastTimer = null;
+function showToast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+/* =========================================================
+   4. NAVIGATION
+========================================================= */
+const views = ["roll","index","battle","inventory","settings"];
+function switchView(name){
+  views.forEach(v => {
+    document.getElementById("view-" + v).classList.toggle("active", v === name);
+  });
+  document.querySelectorAll("nav.bottomnav button").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.view === name);
+  });
+  if(name === "index") renderIndex();
+  if(name === "battle") renderBattleHome();
+  if(name === "inventory") renderInventory();
+}
+document.querySelectorAll("nav.bottomnav button").forEach(btn => {
+  btn.addEventListener("click", () => switchView(btn.dataset.view));
+});
+
+/* =========================================================
+   5. ROLLING
+========================================================= */
+/* Luck: each level exponentially biases weight toward higher tiers, but the
+   per-level effect is now small and the base tier weights are much harder,
+   so early luck levels barely move the needle — it takes real investment. */
+const LUCK_FACTOR_PER_LEVEL = 0.008;
+function equippedGauntletLuckBonus(){
+  if(!state.equippedGauntletId) return 0;
+  const g = ITEMS_BY_ID.get(state.equippedGauntletId);
+  return (g && g.luckBonus) ? g.luckBonus : 0;
+}
+function effectiveLuckLevel(){
+  const tempBonus = state.tempLuckRolls > 0 ? state.tempLuckBonus : 0;
+  return state.luckLevel + equippedGauntletLuckBonus() + tempBonus;
+}
+function getEffectiveWeights(){
+  const factor = 1 + effectiveLuckLevel() * LUCK_FACTOR_PER_LEVEL;
+  return TIERS.map((t, i) => t.weight * Math.pow(factor, i));
+}
+function pickWeightedTier(){
+  const weights = getEffectiveWeights();
+  const biome = getCurrentBiome();
+  const boostIdx = TIER_ORDER.indexOf(biome.boostTier);
+  if(boostIdx >= 0) weights[boostIdx] *= BIOME_BOOST_MULT;
+  const totalWeight = weights.reduce((s,w) => s + w, 0);
+  let r = Math.random() * totalWeight;
+  for(let i = 0; i < TIERS.length; i++){
+    if(r < weights[i]) return TIERS[i].name;
+    r -= weights[i];
+  }
+  return TIERS[0].name;
+}
+
+function rollAura(){
+  const tierName = state.forcedNextTier || pickWeightedTier();
+  const pool = AURAS_BY_TIER[tierName];
+  const aura = pool[Math.floor(Math.random() * pool.length)];
+  return aura;
+}
+
+function luckUpgradeCost(level){
+  return Math.round(50 * Math.pow(1.45, level));
+}
+function updateLuckUI(){
+  document.getElementById("luckLevelDisplay").textContent = state.luckLevel;
+  document.getElementById("luckNextLevel").textContent = state.luckLevel + 1;
+  document.getElementById("luckCostDisplay").textContent = fmt(luckUpgradeCost(state.luckLevel)) + " 🪙";
+  document.getElementById("luckUpgradeBtn").disabled = state.coins < luckUpgradeCost(state.luckLevel);
+}
+document.getElementById("luckUpgradeBtn").addEventListener("click", () => {
+  const cost = luckUpgradeCost(state.luckLevel);
+  if(state.coins < cost){
+    showToast("Not enough Coins for a Luck upgrade!");
+    return;
+  }
+  state.coins -= cost;
+  state.luckLevel += 1;
+  updateTopbar();
+  updateLuckUI();
+  scheduleSave();
+  showToast("Luck increased to Level " + state.luckLevel + "!");
+});
+
+/* Mutation chance: a separate stat you can also invest coins into. */
+const MUTATION_CHANCE_BASE = 0.02;
+const MUTATION_CHANCE_PER_LEVEL = 0.01;
+const MUTATION_CHANCE_CAP = 0.5;
+function mutationChance(){
+  const tempBonus = state.tempMutationRolls > 0 ? state.tempMutationBonus : 0;
+  return Math.min(MUTATION_CHANCE_CAP, MUTATION_CHANCE_BASE + state.mutationLevel * MUTATION_CHANCE_PER_LEVEL + tempBonus);
+}
+function mutationUpgradeCost(level){
+  return Math.round(75 * Math.pow(1.4, level));
+}
+function updateMutationUI(){
+  document.getElementById("mutationChanceDisplay").textContent = (mutationChance() * 100).toFixed(1) + "%";
+  document.getElementById("mutationCostDisplay").textContent = fmt(mutationUpgradeCost(state.mutationLevel)) + " 🪙";
+  document.getElementById("mutationUpgradeBtn").disabled = state.coins < mutationUpgradeCost(state.mutationLevel);
+}
+document.getElementById("mutationUpgradeBtn").addEventListener("click", () => {
+  const cost = mutationUpgradeCost(state.mutationLevel);
+  if(state.coins < cost){
+    showToast("Not enough Coins for a Mutation Chance upgrade!");
+    return;
+  }
+  state.coins -= cost;
+  state.mutationLevel += 1;
+  updateTopbar();
+  updateMutationUI();
+  scheduleSave();
+  showToast("Mutation Chance increased!");
+});
+
+function rollMutation(chance){
+  if(Math.random() >= chance) return null;
+  const weights = MUTATIONS.map(m => 1 / m.mult);
+  const total = weights.reduce((s,w) => s+w, 0);
+  let r = Math.random() * total;
+  for(let i = 0; i < MUTATIONS.length; i++){
+    if(r < weights[i]) return MUTATIONS[i];
+    r -= weights[i];
+  }
+  return MUTATIONS[0];
+}
+
+/* Sound effects: tiny self-contained beeps via WebAudio, no external assets. */
+let audioCtx = null;
+function playBeep(freq, duration, type){
+  if(!state.settings.soundEffects) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
+  } catch(e){ /* audio not available, ignore */ }
+}
+
+const rollBtn = document.getElementById("rollBtn");
+const auraStage = document.getElementById("auraStage");
+const auraContent = document.getElementById("auraContent");
+const auraGlyph = document.getElementById("auraGlyph");
+
+let isRolling = false;
+rollBtn.addEventListener("click", () => {
+  if(isRolling) return;
+  isRolling = true;
+  rollBtn.disabled = true;
+
+  const finalAura = rollAura();
+  const finalMutation = rollMutation(mutationChance());
+  const fast = state.fastRollUnlocked && state.settings.fastRoll;
+  const cycles = fast ? 0 : 10;
+  const intervalMs = fast ? 0 : 55;
+
+  auraStage.classList.add("rolling");
+  vibrate(fast ? 15 : 10);
+
+  let i = 0;
+  function tick(){
+    if(i < cycles){
+      const randomTier = TIERS[Math.floor(Math.random() * TIERS.length)].name;
+      const pool = AURAS_BY_TIER[randomTier];
+      const flickerAura = pool[Math.floor(Math.random() * pool.length)];
+      renderAuraStage(flickerAura, true, null);
+      i++;
+      setTimeout(tick, intervalMs);
+    } else {
+      finishRoll(finalAura, finalMutation);
+    }
+  }
+  tick();
+});
+
+function finishRoll(aura, mutation){
+  auraStage.classList.remove("rolling");
+  state.rollCount += 1;
+  const isNew = !state.discovered.has(aura.id);
+  state.discovered.add(aura.id);
+  state.currentAuraId = aura.id;
+  state.currentMutation = mutation;
+  state.tierShards[aura.tier] = (state.tierShards[aura.tier] || 0) + 1;
+
+  if(state.forcedNextTier) state.forcedNextTier = null;
+  if(state.tempLuckRolls > 0) state.tempLuckRolls -= 1;
+  if(state.tempMutationRolls > 0) state.tempMutationRolls -= 1;
+
+  updateTopbar();
+  scheduleSave();
+
+  function reveal(){
+    renderAuraStage(aura, false, mutation);
+
+    const rareTiers = ["Epic","Legendary","Mythic","Divine","Secret","Transcended"];
+    const isRare = rareTiers.includes(aura.tier);
+    if(isRare){
+      vibrate([30,40,30,40,60]);
+      playBeep(660, 0.35, "triangle");
+    } else {
+      vibrate(20);
+      playBeep(420, 0.12, "sine");
+    }
+    if(mutation){
+      playBeep(880, 0.25, "sawtooth");
+      state.totalMutationsFound += 1;
+      state.bestMutationMult = Math.max(state.bestMutationMult, mutation.mult);
+    }
+    if(aura.isMonarch){
+      showToast("👑 THE MONARCH HAS ASCENDED 👑");
+      vibrate([50,80,50,80,50,80,150]);
+    } else if(isNew){
+      showToast("New Aura discovered: " + aura.name + "!");
+    }
+    if(isRare && !aura.isMonarch && state.settings.rarePullAlerts){
+      setTimeout(() => showToast("🌟 RARE PULL — " + aura.tier + "! 🌟"), isNew ? 1900 : 0);
+    }
+
+    if(state.settings.autoEquipRarest){
+      const equippedOdds = state.equippedAuraId && AURAS_BY_ID.has(state.equippedAuraId) ? AURAS_BY_ID.get(state.equippedAuraId).odds : -1;
+      if(aura.odds > equippedOdds){
+        state.equippedAuraId = aura.id;
+        state.equippedMutation = mutation;
+        renderEquippedCard();
+      }
+    }
+
+    const equipBtn = document.getElementById("equipCurrentBtn");
+    equipBtn.style.display = "inline-block";
+    equipBtn.classList.toggle("is-equipped", state.equippedAuraId === aura.id);
+    equipBtn.textContent = state.equippedAuraId === aura.id ? "Equipped ✓" : "Equip This";
+
+    if(state.settings.autoCraft) autoCraftPass();
+
+    isRolling = false;
+    rollBtn.disabled = false;
+  }
+
+  if(aura.isMonarch){
+    playMonarchRevealAnimation(reveal);
+  } else {
+    reveal();
+  }
+}
+
+function playMonarchRevealAnimation(callback){
+  auraStage.className = "aura-stage tier-Transcended";
+  auraGlyph.textContent = "👑";
+  auraGlyph.style.borderColor = "";
+  auraGlyph.style.boxShadow = "";
+  const duration = 2600;
+  const target = 3000000000;
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = Math.floor(eased * target);
+    auraContent.innerHTML =
+      '<div class="tier-badge">??? TRANSCENDED ???</div>' +
+      '<div class="aura-name monarch-counter">' + fmt(val) + '</div>' +
+      '<div class="aura-odds">calculating odds...</div>';
+    if(t < 1){
+      requestAnimationFrame(frame);
+    } else {
+      callback();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function equipAura(id, mutation){
+  state.equippedAuraId = id;
+  state.equippedMutation = (typeof mutation === "undefined") ? (state.currentAuraId === id ? state.currentMutation : null) : mutation;
+  renderEquippedCard();
+  const equipBtn = document.getElementById("equipCurrentBtn");
+  if(state.currentAuraId === id){
+    equipBtn.classList.add("is-equipped");
+    equipBtn.textContent = "Equipped ✓";
+  }
+  scheduleSave();
+}
+
+function renderEquippedCard(){
+  const glyphEl = document.getElementById("equippedGlyph");
+  const nameEl = document.getElementById("equippedName");
+  if(state.equippedAuraId && AURAS_BY_ID.has(state.equippedAuraId)){
+    const a = AURAS_BY_ID.get(state.equippedAuraId);
+    glyphEl.textContent = tierGlyph(a.tier);
+    const mutTag = state.equippedMutation ? " [" + state.equippedMutation.name + " " + state.equippedMutation.mult + "x]" : "";
+    nameEl.textContent = a.name + mutTag + " (" + a.tier + ")";
+    nameEl.style.color = a.customColor || "";
+  } else {
+    glyphEl.textContent = "🎯";
+    nameEl.textContent = "None — equip one from the Index";
+    nameEl.style.color = "";
+  }
+}
+
+document.getElementById("equipCurrentBtn").addEventListener("click", () => {
+  if(state.currentAuraId) equipAura(state.currentAuraId, state.currentMutation);
+});
+
+function tierGlyph(tier){
+  return { Common:"🌫️", Uncommon:"⚡", Rare:"🔷", Epic:"🌠", Legendary:"👑", Mythic:"🌀", Divine:"✨", Secret:"🌟" }[tier] || "🌌";
+}
+
+function effectiveOdds(aura, mutation){
+  return aura.odds * (mutation ? mutation.mult : 1);
+}
+
+function renderAuraStage(aura, isFlicker, mutation){
+  const effOdds = effectiveOdds(aura, mutation);
+  const displayTier = mutation ? findTierForOdds(effOdds) : aura.tier;
+  auraStage.className = "aura-stage tier-" + displayTier;
+  auraGlyph.textContent = tierGlyph(displayTier);
+  if(aura.customColor){
+    auraGlyph.style.borderColor = aura.customColor;
+    auraGlyph.style.boxShadow = "0 0 26px " + aura.customColor;
+  } else {
+    auraGlyph.style.borderColor = "";
+    auraGlyph.style.boxShadow = "";
+  }
+  const nameStyle = aura.customColor
+    ? ' style="color:' + aura.customColor + '; background:none; -webkit-text-fill-color:' + aura.customColor + ';"'
+    : '';
+  auraContent.innerHTML =
+    '<div class="tier-badge">' + displayTier + (mutation ? " · Mutated" : "") + '</div>' +
+    '<div class="aura-name"' + nameStyle + '>' + escapeHtml(aura.name) + '</div>' +
+    (mutation ? '<div class="mutation-badge">✨ ' + escapeHtml(mutation.name.toUpperCase()) + ' ' + mutation.mult + 'x ✨</div>' : '') +
+    (isFlicker ? '' : '<div class="aura-odds">' + oddsLabel(aura.odds) + (mutation ? ' → now ' + oddsLabel(effOdds) : '') + '</div>');
+}
+
+function escapeHtml(str){
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* =========================================================
+   6. TOPBAR / STATS
+========================================================= */
+function updateTopbar(){
+  document.getElementById("coinDisplay").textContent = fmt(state.coins);
+  document.getElementById("rollCountDisplay").textContent = fmt(state.rollCount);
+  document.getElementById("discoveredMiniDisplay").textContent = fmt(state.discovered.size) + " / " + fmt(totalAuraCount());
+  updateLuckUI();
+  updateMutationUI();
+}
+
+/* =========================================================
+   7. INDEX
+========================================================= */
+const PAGE_SIZE = 60;
+let indexPage = 0;
+let indexSearch = "";
+
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", () => {
+  indexSearch = searchInput.value.trim().toLowerCase();
+  indexPage = 0;
+  renderIndex();
+});
+document.getElementById("prevPageBtn").addEventListener("click", () => {
+  if(indexPage > 0){ indexPage--; renderIndex(); }
+});
+document.getElementById("nextPageBtn").addEventListener("click", () => {
+  indexPage++; renderIndex();
+});
+document.getElementById("auraGrid").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-equip-id]");
+  if(!btn) return;
+  const id = parseInt(btn.dataset.equipId, 10);
+  equipAura(id);
+  renderIndex();
+  showToast("Equipped " + AURAS_BY_ID.get(id).name);
+});
+
+function renderIndex(){
+  document.getElementById("indexCountLabel").textContent =
+    "Discovered: " + fmt(state.discovered.size) + " / " + fmt(totalAuraCount());
+
+  let results;
+  if(indexSearch){
+    results = AURAS.filter(a => a.name.toLowerCase().includes(indexSearch)).slice(0, 300);
+  } else {
+    const start = indexPage * PAGE_SIZE;
+    results = AURAS.slice(start, start + PAGE_SIZE);
+  }
+
+  const grid = document.getElementById("auraGrid");
+  grid.innerHTML = results.map(a => {
+    const discovered = state.discovered.has(a.id);
+    const isEquipped = state.equippedAuraId === a.id;
+    if(discovered){
+      return '<div class="aura-card">' +
+        '<div class="left"><div class="name">' + escapeHtml(a.name) + '</div>' +
+        '<div class="meta">' + a.tier + ' · ' + oddsLabel(a.odds) + ' · #' + a.id + '</div></div>' +
+        '<button class="equip-btn' + (isEquipped ? ' is-equipped' : '') + '" data-equip-id="' + a.id + '">' +
+        (isEquipped ? '★ Equipped' : 'Equip') + '</button></div>';
+    } else {
+      return '<div class="aura-card locked">' +
+        '<div class="left"><div class="name">' + escapeHtml(a.name) + '</div>' +
+        '<div class="meta">' + a.tier + ' · ' + oddsLabel(a.odds) + ' · #' + a.id + '</div></div>' +
+        '<div class="not-rolled-tag">Not rolled yet</div></div>';
+    }
+  }).join("");
+
+  const pager = document.getElementById("pager");
+  if(indexSearch){
+    pager.style.display = "none";
+  } else {
+    pager.style.display = "flex";
+    const maxPage = Math.ceil(totalAuraCount() / PAGE_SIZE) - 1;
+    document.getElementById("prevPageBtn").disabled = indexPage <= 0;
+    document.getElementById("nextPageBtn").disabled = indexPage >= maxPage;
+    document.getElementById("pageInfo").textContent =
+      "Page " + (indexPage + 1) + " / " + (maxPage + 1);
+  }
+}
+
+/* =========================================================
+   8. FLEX BATTLE
+========================================================= */
+let battleState = null; // {playerAuraId, npcPool, playerScore, npcScore, round}
+
+function renderBattleHome(){
+  const locked = document.getElementById("battleLocked");
+  const unlocked = document.getElementById("battleUnlocked");
+  if(state.discovered.size < 3){
+    locked.style.display = "block";
+    unlocked.style.display = "none";
+    return;
+  }
+  locked.style.display = "none";
+  unlocked.style.display = "block";
+
+  document.getElementById("battleLevelDisplay").textContent = "NPC Level " + state.battleLevel;
+  document.getElementById("battleRewardHint").textContent = "Win reward: " + fmt(battleReward(state.battleLevel)) + " 🪙";
+
+  document.getElementById("battleSetup").style.display = "block";
+  document.getElementById("battleActive").style.display = "none";
+  document.getElementById("battleEnd").style.display = "none";
+
+  const discoveredAuras = Array.from(state.discovered).map(id => AURAS_BY_ID.get(id)).sort((a,b) => b.odds - a.odds);
+  const optionsHtml = discoveredAuras.map(a => '<option value="' + a.id + '">' + escapeHtml(a.name) + " — " + oddsLabel(a.odds) + '</option>').join("");
+
+  const select = document.getElementById("auraSelect");
+  select.innerHTML = optionsHtml;
+  const defaultId = (state.equippedAuraId && state.discovered.has(state.equippedAuraId)) ? state.equippedAuraId : discoveredAuras[0].id;
+  select.value = defaultId;
+
+  const selectActive = document.getElementById("auraSelectActive");
+  selectActive.innerHTML = optionsHtml;
+}
+
+function battleReward(level){
+  const base = 25 + (level - 1) * 5;
+  const gauntlet = state.equippedGauntletId ? ITEMS_BY_ID.get(state.equippedGauntletId) : null;
+  const bonus = gauntlet ? gauntlet.rewardBonusPct : 0;
+  return Math.round(base * (1 + bonus / 100));
+}
+
+function npcTierPoolForLevel(level){
+  // unlock one extra tier of NPC access every 4 levels now (was 6) — enemies get tough faster
+  const maxTierIdx = Math.min(TIER_ORDER.length - 1, Math.floor((level - 1) / 4));
+  return TIER_ORDER.slice(0, maxTierIdx + 1);
+}
+
+function npcMutationChanceForLevel(level){
+  return Math.min(0.35, level * 0.006);
+}
+
+function npcPickAura(level){
+  const pool = npcTierPoolForLevel(level);
+  // weight toward the top of their unlocked range, and that bias keeps growing with level
+  const topBias = 1 + Math.min(6, level * 0.08);
+  const weights = pool.map((t, i) => (i === pool.length - 1) ? topBias : 1);
+  const totalW = weights.reduce((s,w) => s+w, 0);
+  let r = Math.random() * totalW;
+  let chosenTier = pool[0];
+  for(let i = 0; i < pool.length; i++){
+    if(r < weights[i]){ chosenTier = pool[i]; break; }
+    r -= weights[i];
+  }
+  const tierPool = AURAS_BY_TIER[chosenTier];
+  const aura = tierPool[Math.floor(Math.random() * tierPool.length)];
+  const mutation = rollMutation(npcMutationChanceForLevel(level));
+  return { aura, mutation };
+}
+
+function getMutationForAuraSelection(auraId){
+  return auraId === state.equippedAuraId ? state.equippedMutation : null;
+}
+
+document.getElementById("startBattleBtn").addEventListener("click", () => {
+  const auraId = parseInt(document.getElementById("auraSelect").value, 10);
+  if(!auraId) return;
+  battleState = { playerAuraId: auraId, playerMutation: getMutationForAuraSelection(auraId), playerScore: 0, npcScore: 0, round: 0 };
+  document.getElementById("battleSetup").style.display = "none";
+  document.getElementById("battleActive").style.display = "block";
+  document.getElementById("playerScore").textContent = "0";
+  document.getElementById("npcScore").textContent = "0";
+  document.getElementById("roundResultText").textContent = "Tap Flex! to play a round.";
+  document.getElementById("auraSelectActive").value = auraId;
+  resetFighterCards();
+});
+
+document.getElementById("auraSelectActive").addEventListener("change", (e) => {
+  if(!battleState) return;
+  battleState.playerAuraId = parseInt(e.target.value, 10);
+  battleState.playerMutation = getMutationForAuraSelection(battleState.playerAuraId);
+  resetFighterCards();
+  document.getElementById("roundResultText").textContent = "Aura switched — ready for the next round.";
+});
+
+function resetFighterCards(){
+  const pAura = AURAS_BY_ID.get(battleState.playerAuraId);
+  const pMut = battleState.playerMutation;
+  const pEff = effectiveOdds(pAura, pMut);
+  document.getElementById("playerFighterCard").className = "fighter-card";
+  document.getElementById("playerFighterCard").innerHTML =
+    '<div class="who">You</div><div class="fname">' + escapeHtml(pAura.name) + (pMut ? " [" + pMut.name + " " + pMut.mult + "x]" : "") + '</div>' +
+    '<div class="fodds">' + oddsLabel(pEff) + '</div>';
+  document.getElementById("npcFighterCard").className = "fighter-card";
+  document.getElementById("npcFighterCard").innerHTML = '<div class="who">NPC</div><div class="fname">?</div><div class="fodds">—</div>';
+}
+
+document.getElementById("nextRoundBtn").addEventListener("click", () => {
+  if(!battleState) return;
+  const pAura = AURAS_BY_ID.get(battleState.playerAuraId);
+  const pMut = battleState.playerMutation;
+  const pEff = effectiveOdds(pAura, pMut);
+  const { aura: nAura, mutation: nMut } = npcPickAura(state.battleLevel);
+  const nEff = effectiveOdds(nAura, nMut);
+
+  document.getElementById("npcFighterCard").innerHTML =
+    '<div class="who">NPC</div><div class="fname">' + escapeHtml(nAura.name) + (nMut ? " [" + nMut.name + " " + nMut.mult + "x]" : "") + '</div>' +
+    '<div class="fodds">' + oddsLabel(nEff) + '</div>';
+
+  let resultText;
+  const pCard = document.getElementById("playerFighterCard");
+  const nCard = document.getElementById("npcFighterCard");
+  pCard.classList.remove("winner");
+  nCard.classList.remove("winner");
+
+  if(pEff === nEff){
+    resultText = "Tie — same rarity! No point awarded.";
+  } else if(pEff > nEff){
+    battleState.playerScore++;
+    pCard.classList.add("winner");
+    resultText = "Your " + pAura.name + " is rarer! You win the point.";
+    vibrate(20);
+  } else {
+    battleState.npcScore++;
+    nCard.classList.add("winner");
+    resultText = "NPC's " + nAura.name + " is rarer. They win the point.";
+    vibrate([10,20,10]);
+  }
+  document.getElementById("roundResultText").textContent = resultText;
+  document.getElementById("playerScore").textContent = battleState.playerScore;
+  document.getElementById("npcScore").textContent = battleState.npcScore;
+
+  if(battleState.playerScore >= 3 || battleState.npcScore >= 3){
+    setTimeout(() => endBattle(battleState.playerScore >= 3), 600);
+  }
+});
+
+function endBattle(playerWon){
+  document.getElementById("battleActive").style.display = "none";
+  document.getElementById("battleEnd").style.display = "block";
+  const headline = document.getElementById("battleEndHeadline");
+  const rewardEl = document.getElementById("battleEndReward");
+
+  if(playerWon){
+    const reward = battleReward(state.battleLevel);
+    gainCoins(reward);
+    state.battleWinsTotal += 1;
+    state.battleLevel += 1;
+    headline.textContent = "You Win! 🏆";
+    headline.style.color = "var(--gold)";
+    rewardEl.textContent = "+" + fmt(reward) + " Coins — advancing to Level " + state.battleLevel;
+    vibrate([30,50,30,50,80]);
+  } else {
+    headline.textContent = "NPC Wins This Round";
+    headline.style.color = "var(--danger)";
+    rewardEl.textContent = "No reward — try again!";
+  }
+  updateTopbar();
+  scheduleSave();
+}
+
+document.getElementById("continueBattleBtn").addEventListener("click", () => {
+  battleState = null;
+  renderBattleHome();
+});
+
+/* =========================================================
+   8b. INVENTORY / CRAFTING
+========================================================= */
+const SHARD_ICONS = { Common:"🌫️", Uncommon:"⚡", Rare:"🔷", Epic:"🌠", Legendary:"👑", Mythic:"🌀", Divine:"✨", Secret:"🌟", Transcended:"♾️" };
+
+function usedSlots(){
+  return Object.keys(state.inventory).filter(id => state.inventory[id] > 0).length;
+}
+function slotUpgradeCost(currentSlots){
+  const steps = Math.round((currentSlots - 20) / 10);
+  return Math.round(500 * Math.pow(1.6, steps));
+}
+function canAffordRecipe(item){
+  if(state.coins < item.coins) return false;
+  for(const tier in item.shards){
+    if((state.tierShards[tier] || 0) < item.shards[tier]) return false;
+  }
+  const alreadyOwned = (state.inventory[item.id] || 0) > 0;
+  if(!alreadyOwned && usedSlots() >= state.inventorySlots) return false;
+  return true;
+}
+function doCraft(item){
+  if(!canAffordRecipe(item)) return false;
+  state.coins -= item.coins;
+  for(const tier in item.shards){
+    state.tierShards[tier] -= item.shards[tier];
+  }
+  state.inventory[item.id] = (state.inventory[item.id] || 0) + 1;
+  state.craftedEver[item.id] = true;
+  state.totalCrafted += 1;
+  return true;
+}
+function autoCraftPass(){
+  const sorted = [...ITEMS].sort((a,b) => a.coins - b.coins);
+  let craftedAny = false;
+  sorted.forEach(item => {
+    if(doCraft(item)) craftedAny = true;
+  });
+  if(craftedAny){
+    updateTopbar();
+    scheduleSave();
+    if(document.getElementById("view-inventory").classList.contains("active")) renderInventory();
+  }
+}
+
+function renderInventory(){
+  const shardGrid = document.getElementById("shardGrid");
+  shardGrid.innerHTML = TIER_ORDER.map(t =>
+    '<div class="shard-chip"><div class="sc-icon">' + SHARD_ICONS[t] + '</div>' +
+    '<div class="sc-count">' + fmt(state.tierShards[t] || 0) + '</div>' +
+    '<div class="sc-label">' + t + '</div></div>'
+  ).join("");
+
+  const slotsUsed = usedSlots();
+  document.getElementById("slotUsageText").textContent = slotsUsed + " / " + state.inventorySlots + " slots used";
+  const atMax = state.inventorySlots >= 200;
+  const slotBtn = document.getElementById("upgradeSlotsBtn");
+  slotBtn.disabled = atMax || state.coins < slotUpgradeCost(state.inventorySlots);
+  slotBtn.textContent = atMax ? "Max Slots Reached (200)" : "➕ +10 Slots — " + fmt(slotUpgradeCost(state.inventorySlots)) + " 🪙";
+
+  const ownedIds = Object.keys(state.inventory).filter(id => state.inventory[id] > 0);
+  const ownedList = document.getElementById("ownedItemsList");
+  if(ownedIds.length === 0){
+    ownedList.innerHTML = '<div class="aura-placeholder" style="padding:10px 2px;">No items crafted yet — craft one below!</div>';
+  } else {
+    ownedList.innerHTML = ownedIds.map(id => {
+      const item = ITEMS_BY_ID.get(id);
+      const count = state.inventory[id];
+      const isEquipped = item.type === "gauntlet" && state.equippedGauntletId === id;
+      const actionLabel = item.type === "potion" ? "Use" : (isEquipped ? "Unequip" : "Equip");
+      return '<div class="item-card' + (isEquipped ? ' equipped' : '') + '">' +
+        '<div class="left"><div class="ic-name">' + item.icon + ' ' + escapeHtml(item.name) + ' ×' + count + '</div>' +
+        '<div class="ic-desc">' + item.description + '</div></div>' +
+        '<button class="item-action-btn' + (isEquipped ? ' equipped' : '') + '" data-item-action="' + item.id + '">' + actionLabel + '</button></div>';
+    }).join("");
+  }
+
+  const recipeList = document.getElementById("recipeList");
+  recipeList.innerHTML = ITEMS.map(item => {
+    const affordable = canAffordRecipe(item);
+    const alreadyOwned = (state.inventory[item.id] || 0) > 0;
+    const blockedBySlots = !alreadyOwned && usedSlots() >= state.inventorySlots;
+    const shardText = Object.keys(item.shards).map(t => {
+      const have = state.tierShards[t] || 0;
+      const need = item.shards[t];
+      return '<span class="' + (have >= need ? 'ok' : 'bad') + '">' + fmt(need) + ' ' + t + ' shard' + (need>1?'s':'') + '</span>';
+    }).join(" + ");
+    const coinText = '<span class="' + (state.coins >= item.coins ? 'ok' : 'bad') + '">' + fmt(item.coins) + ' 🪙</span>';
+    const btnLabel = affordable ? "Craft" : (blockedBySlots ? "Inventory full" : "Not enough materials");
+    return '<div class="recipe-card">' +
+      '<div class="rc-head"><div><div class="rc-name">' + item.icon + ' ' + escapeHtml(item.name) + '</div>' +
+      '<div class="rc-desc">' + item.description + '</div></div></div>' +
+      '<div class="rc-cost">Needs: ' + shardText + ' + ' + coinText + '</div>' +
+      '<button class="craft-btn" data-craft-id="' + item.id + '" ' + (affordable ? '' : 'disabled') + '>' +
+      btnLabel + '</button></div>';
+  }).join("");
+}
+
+document.getElementById("upgradeSlotsBtn").addEventListener("click", () => {
+  if(state.inventorySlots >= 200) return;
+  const cost = slotUpgradeCost(state.inventorySlots);
+  if(state.coins < cost){
+    showToast("Not enough Coins to expand your Inventory!");
+    return;
+  }
+  state.coins -= cost;
+  state.inventorySlots = Math.min(200, state.inventorySlots + 10);
+  updateTopbar();
+  renderInventory();
+  scheduleSave();
+  showToast("Inventory expanded to " + state.inventorySlots + " slots!");
+});
+
+document.getElementById("recipeList").addEventListener("click", e => {
+  const btn = e.target.closest("[data-craft-id]");
+  if(!btn) return;
+  const item = ITEMS_BY_ID.get(btn.dataset.craftId);
+  if(!item) return;
+  if(!doCraft(item)) return;
+  updateTopbar();
+  renderInventory();
+  scheduleSave();
+  showToast("Crafted " + item.name + "!");
+});
+
+document.getElementById("ownedItemsList").addEventListener("click", e => {
+  const btn = e.target.closest("[data-item-action]");
+  if(!btn) return;
+  const item = ITEMS_BY_ID.get(btn.dataset.itemAction);
+  if(!item) return;
+  if(item.type === "potion"){
+    if((state.inventory[item.id] || 0) <= 0) return;
+    state.inventory[item.id] -= 1;
+    applyPotionEffect(item);
+    updateTopbar();
+  } else {
+    state.equippedGauntletId = (state.equippedGauntletId === item.id) ? null : item.id;
+    showToast(state.equippedGauntletId ? "Equipped " + item.name : "Unequipped " + item.name);
+  }
+  renderInventory();
+  scheduleSave();
+});
+
+function applyPotionEffect(item){
+  switch(item.effectType){
+    case "coins":
+      gainCoins(item.effectValue);
+      showToast("Used " + item.name + " — +" + fmt(item.effectValue) + " Coins!");
+      break;
+    case "luckBoost":
+      state.tempLuckBonus = Math.max(state.tempLuckBonus, item.effectValue);
+      state.tempLuckRolls = 5;
+      showToast("Used " + item.name + " — +" + item.effectValue + " Luck for 5 rolls!");
+      break;
+    case "mutationBoost":
+      state.tempMutationBonus = Math.max(state.tempMutationBonus, item.effectValue / 100);
+      state.tempMutationRolls = 5;
+      showToast("Used " + item.name + " — +" + item.effectValue + "% Mutation Chance for 5 rolls!");
+      break;
+    case "guaranteedTier":
+      state.forcedNextTier = item.effectValue;
+      showToast("Used " + item.name + " — next roll guaranteed " + item.effectValue + "+!");
+      break;
+    case "shardRefund":
+      state.tierShards[item.effectTier] = (state.tierShards[item.effectTier] || 0) + item.effectValue;
+      showToast("Used " + item.name + " — +" + item.effectValue + " " + item.effectTier + " Shards!");
+      break;
+    case "battleLevelSkip":
+      state.battleLevel += item.effectValue;
+      showToast("Used " + item.name + " — skipped +" + item.effectValue + " NPC level" + (item.effectValue>1?"s":"") + "!");
+      break;
+    case "permanentLuck":
+      state.luckLevel += item.effectValue;
+      showToast("👑 Used " + item.name + " — +" + fmt(item.effectValue) + " permanent Luck!");
+      break;
+  }
+}
+
+/* =========================================================
+   9. SETTINGS
+========================================================= */
+function applySettingsToUI(){
+  document.getElementById("fastRollLockedRow").style.display = state.fastRollUnlocked ? "none" : "flex";
+  document.getElementById("fastRollUnlockedRow").style.display = state.fastRollUnlocked ? "flex" : "none";
+  document.getElementById("toggleFastRoll").checked = state.settings.fastRoll;
+  document.getElementById("toggleVibration").checked = state.settings.vibration;
+  document.getElementById("toggleRareAnim").checked = state.settings.rareAnim;
+  document.getElementById("toggleSoundEffects").checked = state.settings.soundEffects;
+  document.getElementById("toggleAutoEquip").checked = state.settings.autoEquipRarest;
+  document.getElementById("toggleRareAlerts").checked = state.settings.rarePullAlerts;
+  document.getElementById("toggleOddsPercent").checked = state.settings.showOddsAsPercent;
+  document.getElementById("toggleAutoCraft").checked = state.settings.autoCraft;
+  document.querySelector(".app").classList.toggle("anim-on", state.settings.rareAnim);
+}
+document.getElementById("unlockFastRollBtn").addEventListener("click", () => {
+  const cost = 10000000;
+  if(state.coins < cost){
+    showToast("Need " + fmt(cost) + " Coins to unlock Quick Roll!");
+    return;
+  }
+  state.coins -= cost;
+  state.fastRollUnlocked = true;
+  updateTopbar();
+  applySettingsToUI();
+  scheduleSave();
+  showToast("⚡ Quick Roll unlocked!");
+});
+document.getElementById("toggleAutoCraft").addEventListener("change", e => {
+  state.settings.autoCraft = e.target.checked; scheduleSave();
+});
+document.getElementById("toggleFastRoll").addEventListener("change", e => {
+  state.settings.fastRoll = e.target.checked; scheduleSave();
+});
+document.getElementById("toggleVibration").addEventListener("change", e => {
+  state.settings.vibration = e.target.checked; scheduleSave();
+});
+document.getElementById("toggleRareAnim").addEventListener("change", e => {
+  state.settings.rareAnim = e.target.checked;
+  document.querySelector(".app").classList.toggle("anim-on", state.settings.rareAnim);
+  scheduleSave();
+});
+document.getElementById("toggleSoundEffects").addEventListener("change", e => {
+  state.settings.soundEffects = e.target.checked; scheduleSave();
+});
+document.getElementById("toggleAutoEquip").addEventListener("change", e => {
+  state.settings.autoEquipRarest = e.target.checked; scheduleSave();
+});
+document.getElementById("toggleRareAlerts").addEventListener("change", e => {
+  state.settings.rarePullAlerts = e.target.checked; scheduleSave();
+});
+document.getElementById("toggleOddsPercent").addEventListener("change", e => {
+  state.settings.showOddsAsPercent = e.target.checked;
+  renderAll();
+  scheduleSave();
+});
+document.getElementById("resetProgressBtn").addEventListener("click", async () => {
+  if(!confirm("Reset ALL progress? This cannot be undone.")) return;
+  state.coins = 50;
+  state.rollCount = 0;
+  state.discovered = new Set();
+  state.currentAuraId = null;
+  state.equippedAuraId = null;
+  state.currentMutation = null;
+  state.equippedMutation = null;
+  state.luckLevel = 0;
+  state.mutationLevel = 0;
+  state.battleLevel = 1;
+  state.tierShards = { Common:0, Uncommon:0, Rare:0, Epic:0, Legendary:0, Mythic:0, Divine:0, Secret:0, Transcended:0 };
+  state.inventory = {};
+  state.craftedEver = {};
+  state.equippedGauntletId = null;
+  state.totalCoinsEarned = 50;
+  state.totalCrafted = 0;
+  state.totalMutationsFound = 0;
+  state.bestMutationMult = 0;
+  state.battleWinsTotal = 0;
+  await saveGame();
+  showToast("Progress reset");
+  renderAll();
+});
+
+/* modals */
+function openModal(id){ document.getElementById(id).classList.add("active"); }
+function closeModal(id){ document.getElementById(id).classList.remove("active"); }
+document.getElementById("openHowToPlay").addEventListener("click", () => openModal("htpBackdrop"));
+document.getElementById("openAdminPanel").addEventListener("click", () => openModal("adminBackdrop"));
+document.getElementById("openCreateAura").addEventListener("click", () => openModal("createAuraBackdrop"));
+
+/* Achievements */
+const ACH_PAGE_SIZE = 60;
+let achAuraPage = 0;
+let achAuraSearch = "";
+
+function renderAchievementsSummary(){
+  document.getElementById("achProgressText").textContent =
+    "Unlocked: " + fmt(achievementUnlockedCount()) + " / " + fmt(achievementTotal());
+}
+function renderMilestones(){
+  const list = document.getElementById("achMilestoneList");
+  list.innerHTML = MILESTONES.map(m => {
+    const done = m.check(state);
+    return '<div class="aura-card' + (done ? '' : ' locked') + '">' +
+      '<div class="left"><div class="name">' + (done ? "🏆 " : "🔒 ") + escapeHtml(m.name) + '</div>' +
+      '<div class="meta">' + escapeHtml(m.desc) + '</div></div></div>';
+  }).join("");
+}
+function renderAchAuras(){
+  let results;
+  if(achAuraSearch){
+    results = AURAS.filter(a => a.name.toLowerCase().includes(achAuraSearch)).slice(0, 300);
+  } else {
+    const start = achAuraPage * ACH_PAGE_SIZE;
+    results = AURAS.slice(start, start + ACH_PAGE_SIZE);
+  }
+  const grid = document.getElementById("achAuraGrid");
+  grid.innerHTML = results.map(a => {
+    const done = state.discovered.has(a.id);
+    return '<div class="aura-card' + (done ? '' : ' locked') + '">' +
+      '<div class="left"><div class="name">' + (done ? "🏆 " : "🔒 ") + "Discover " + escapeHtml(a.name) + '</div>' +
+      '<div class="meta">' + a.tier + ' · ' + oddsLabel(a.odds) + '</div></div></div>';
+  }).join("");
+
+  const pager = document.getElementById("achAuraPager");
+  if(achAuraSearch){
+    pager.style.display = "none";
+  } else {
+    pager.style.display = "flex";
+    const maxPage = Math.ceil(totalAuraCount() / ACH_PAGE_SIZE) - 1;
+    document.getElementById("achPrevPage").disabled = achAuraPage <= 0;
+    document.getElementById("achNextPage").disabled = achAuraPage >= maxPage;
+    document.getElementById("achPageInfo").textContent = "Page " + (achAuraPage + 1) + " / " + (maxPage + 1);
+  }
+}
+function switchAchTab(tab){
+  document.getElementById("achTabMilestones").classList.toggle("active", tab === "milestones");
+  document.getElementById("achTabAuras").classList.toggle("active", tab === "auras");
+  document.getElementById("achMilestonesPane").style.display = tab === "milestones" ? "block" : "none";
+  document.getElementById("achAurasPane").style.display = tab === "auras" ? "block" : "none";
+  if(tab === "auras") renderAchAuras();
+}
+document.getElementById("achTabMilestones").addEventListener("click", () => switchAchTab("milestones"));
+document.getElementById("achTabAuras").addEventListener("click", () => switchAchTab("auras"));
+document.getElementById("achAuraSearch").addEventListener("input", (e) => {
+  achAuraSearch = e.target.value.trim().toLowerCase();
+  achAuraPage = 0;
+  renderAchAuras();
+});
+document.getElementById("achPrevPage").addEventListener("click", () => { if(achAuraPage > 0){ achAuraPage--; renderAchAuras(); } });
+document.getElementById("achNextPage").addEventListener("click", () => { achAuraPage++; renderAchAuras(); });
+
+document.getElementById("openAchievements").addEventListener("click", () => {
+  openModal("achievementsBackdrop");
+  switchAchTab("milestones");
+  renderAchievementsSummary();
+  renderMilestones();
+});
+
+/* Daily Quests UI */
+function renderDailyQuests(){
+  ensureDailyQuests();
+  const list = document.getElementById("dailyQuestsList");
+  list.innerHTML = state.dailyQuests.quests.map((q, i) => {
+    const progress = Math.min(q.target, questProgress(q));
+    const done = progress >= q.target;
+    const claimed = state.dailyQuests.claimed[i];
+    const pct = Math.round((progress / q.target) * 100);
+    let btnHtml;
+    if(claimed){
+      btnHtml = '<button class="item-action-btn equipped" disabled>Claimed ✓</button>';
+    } else if(done){
+      btnHtml = '<button class="item-action-btn" data-claim-quest="' + i + '" style="border-color:var(--gold); color:var(--gold);">Claim +' + fmt(q.reward) + ' 🪙</button>';
+    } else {
+      btnHtml = '<button class="item-action-btn" disabled>' + progress + ' / ' + q.target + '</button>';
+    }
+    return '<div class="item-card' + (claimed ? ' equipped' : '') + '">' +
+      '<div class="left"><div class="ic-name">' + (claimed ? "✅ " : done ? "🎉 " : "📌 ") + escapeHtml(q.label) + '</div>' +
+      '<div class="ic-desc">Progress: ' + progress + ' / ' + q.target + ' (' + pct + '%)</div></div>' +
+      btnHtml + '</div>';
+  }).join("");
+}
+document.getElementById("dailyQuestsList").addEventListener("click", e => {
+  const btn = e.target.closest("[data-claim-quest]");
+  if(!btn) return;
+  const i = parseInt(btn.dataset.claimQuest, 10);
+  const q = state.dailyQuests.quests[i];
+  if(!q || state.dailyQuests.claimed[i]) return;
+  if(questProgress(q) < q.target) return;
+  state.dailyQuests.claimed[i] = true;
+  gainCoins(q.reward);
+  updateTopbar();
+  renderDailyQuests();
+  scheduleSave();
+  showToast("Claimed +" + fmt(q.reward) + " Coins!");
+});
+document.getElementById("openDailyQuests").addEventListener("click", () => {
+  openModal("dailyQuestsBackdrop");
+  renderDailyQuests();
+});
+
+document.getElementById("forceSaveBtn").addEventListener("click", async () => {
+  await saveGame();
+  showToast(lastSaveStatus.startsWith("✅") ? "Saved!" : "Save failed — see status below");
+});
+document.querySelectorAll("[data-close]").forEach(btn => {
+  btn.addEventListener("click", () => closeModal(btn.dataset.close));
+});
+document.querySelectorAll(".modal-backdrop").forEach(bd => {
+  bd.addEventListener("click", e => { if(e.target === bd) bd.classList.remove("active"); });
+});
+
+document.getElementById("customAuraOdds").addEventListener("input", (e) => {
+  const val = parseInt(e.target.value, 10);
+  const preview = document.getElementById("customOddsPreview");
+  preview.textContent = val > 0 ? "Preview: 1 / " + fmt(val) : "Preview: 1 / —";
+});
+
+document.getElementById("createAuraSubmitBtn").addEventListener("click", () => {
+  const name = document.getElementById("customAuraName").value.trim();
+  const tier = document.getElementById("customAuraTier").value;
+  const odds = parseInt(document.getElementById("customAuraOdds").value, 10);
+  const color = document.getElementById("customAuraColor").value;
+  const msg = document.getElementById("createAuraMsg");
+
+  if(!name){ msg.textContent = "Give your Aura a name."; msg.style.color = "var(--danger)"; return; }
+  if(!odds || odds < 1){ msg.textContent = "Enter a valid odds denominator (1 or higher)."; msg.style.color = "var(--danger)"; return; }
+
+  const record = { name, tier, odds, color };
+  const aura = addCustomAura(record);
+  state.customAuras.push({ id: aura.id, name, tier, odds, color });
+  state.discovered.add(aura.id);
+  state.currentAuraId = aura.id;
+
+  document.getElementById("customAuraName").value = "";
+  document.getElementById("customAuraOdds").value = "";
+  document.getElementById("customOddsPreview").textContent = "Preview: 1 / —";
+  msg.textContent = "✅ " + name + " added to the Index!";
+  msg.style.color = "var(--c-uncommon)";
+
+  renderAuraStage(aura, false, null);
+  updateTopbar();
+  renderIndex();
+  scheduleSave();
+});
+
+/* admin */
+document.getElementById("adminSubmitBtn").addEventListener("click", () => {
+  const val = document.getElementById("adminPasswordInput").value;
+  const msg = document.getElementById("adminMsg");
+  if(val === ADMIN_PASSWORD){
+    document.getElementById("adminTools").style.display = "block";
+    msg.textContent = "Access granted.";
+    msg.style.color = "var(--c-uncommon)";
+  } else {
+    document.getElementById("adminTools").style.display = "none";
+    msg.textContent = "Incorrect password.";
+    msg.style.color = "var(--danger)";
+  }
+});
+document.getElementById("admin10kBtn").addEventListener("click", () => {
+  gainCoins(10000);
+  updateTopbar();
+  scheduleSave();
+  showToast("+10,000 Coins added");
+});
+document.getElementById("adminSecretBtn").addEventListener("click", () => {
+  const pool = AURAS_BY_TIER["Secret"];
+  const aura = pool[Math.floor(Math.random() * pool.length)];
+  state.discovered.add(aura.id);
+  state.currentAuraId = aura.id;
+  renderAuraStage(aura, false);
+  updateTopbar();
+  scheduleSave();
+  showToast("Discovered: " + aura.name);
+});
+
+/* =========================================================
+   10. STARFIELD BACKGROUND (decorative canvas)
+========================================================= */
+(function starfield(){
+  const canvas = document.getElementById("starsCanvas");
+  const ctx = canvas.getContext("2d");
+  let stars = [];
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const count = Math.floor((canvas.width * canvas.height) / 6000);
+    stars = Array.from({length: count}, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random() * 0.6 + 0.2,
+      tw: Math.random() * 0.02 + 0.005,
+    }));
+  }
+  function draw(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.a += s.tw;
+      const alpha = 0.3 + Math.abs(Math.sin(s.a)) * 0.5;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(230,225,255," + alpha + ")";
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+  draw();
+})();
+
+/* =========================================================
+   11. INIT
+========================================================= */
+function renderAll(){
+  updateTopbar();
+  renderEquippedCard();
+  renderBiomeBanner();
+  ensureDailyQuests();
+  if(state.currentAuraId){
+    renderAuraStage(AURAS_BY_ID.get(state.currentAuraId), false, state.currentMutation);
+    const equipBtn = document.getElementById("equipCurrentBtn");
+    equipBtn.style.display = "inline-block";
+    equipBtn.classList.toggle("is-equipped", state.equippedAuraId === state.currentAuraId);
+    equipBtn.textContent = state.equippedAuraId === state.currentAuraId ? "Equipped ✓" : "Equip This";
+  }
+  renderIndex();
+  renderBattleHome();
+  renderInventory();
+}
+
+loadGame();
+
+})();
+</script>
+</body>
+</html>
