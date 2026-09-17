@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Cosmic Rolls</title>
+<title>Cosmic Roll- ULTRA ENTERTAINMENT PRESENTS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -486,7 +486,7 @@
 <div class="app">
 
   <header class="topbar">
-    <div class="brand"><span class="dot"></span>Cosmic Rolls</div>
+    <div class="brand"><span class="dot"></span>Cosmic Roll- ULTRA ENTERTAINMENT PRESENTS</div>
     <div class="coins-pill"><span class="icon">🪙</span><span id="coinDisplay">0</span></div>
   </header>
 
@@ -536,7 +536,7 @@
 
       <button class="roll-btn" id="rollBtn">
         ROLL
-        <span class="sub">Free — rarity depends on your Luck</span>
+        <span class="sub">Free — rarity depends on your Luck • Roll cannot be interrupted</span>
       </button>
 
       <button class="luck-btn" id="luckUpgradeBtn">
@@ -552,7 +552,11 @@
 
     <!-- INDEX VIEW -->
     <section class="view" id="view-index">
-      <div class="search-row">
+      <div class="index-tabs" style="display:flex; gap:8px; margin-bottom:10px;">
+        <button class="primary-btn" id="indexAurasTab" style="margin-top:0; flex:1;">✨ Auras</button>
+        <button class="ghost-btn" id="indexMutationsTab" style="margin-top:0; flex:1;">🧬 Mutations</button>
+      </div>
+      <div class="search-row" id="indexAuraSearchRow">
         <input type="text" class="search-input" id="searchInput" placeholder="Search Aura name...">
       </div>
       <div class="discover-count" id="indexCountLabel">Discovered: 0 / 10,000</div>
@@ -561,6 +565,15 @@
         <button id="prevPageBtn">← Prev</button>
         <span class="pageinfo" id="pageInfo">Page 1</span>
         <button id="nextPageBtn">Next →</button>
+      </div>
+      <div id="indexMutationsPane" style="display:none;">
+        <div class="discover-count">Mutations: <span id="mutationIndexCount">0 / 1000</span> found</div>
+        <div class="aura-grid" id="mutationGrid"></div>
+        <div class="pager" id="mutationPager">
+          <button id="prevMutationPageBtn">← Prev</button>
+          <span class="pageinfo" id="mutationPageInfo">Page 1</span>
+          <button id="nextMutationPageBtn">Next →</button>
+        </div>
       </div>
     </section>
 
@@ -617,14 +630,30 @@
 
     <!-- INVENTORY / CRAFTING VIEW -->
     <section class="view" id="view-inventory">
+      <div class="index-tabs" style="display:flex; gap:8px; margin-bottom:10px;">
+        <button class="primary-btn" id="auraInventoryTab" style="margin-top:0; flex:1;">✨ Auras</button>
+        <button class="ghost-btn" id="gearInventoryTab" style="margin-top:0; flex:1;">⚙️ Gear</button>
+        <button class="ghost-btn" id="potionInventoryTab" style="margin-top:0; flex:1;">🧪 Potions</button>
+      </div>
+      <div id="auraInventoryPane">
+        <div class="section-title">✨ Aura Inventory <span id="auraSlotUsageText" style="font-weight:400; font-size:11px;">0 / 20 slots</span></div>
+        <button class="ghost-btn" id="upgradeAuraSlotsBtn" style="margin-top:0; margin-bottom:10px;">➕ +10 Aura Slots — 500 🪙</button>
+        <div id="auraInventoryList" class="aura-grid"></div>
+      </div>
+      <div id="gearInventoryPane" style="display:none;">
       <div class="section-title">🧵 Your Materials</div>
       <div class="shard-grid" id="shardGrid"></div>
 
-      <div class="section-title">🎒 Your Items <span id="slotUsageText" style="font-weight:400; font-size:11px;">0 / 20 slots used</span></div>
-      <button class="ghost-btn" id="upgradeSlotsBtn" style="margin-top:0; margin-bottom:10px;">➕ +10 Slots — 500 🪙</button>
+      <div class="section-title">🎒 Gear Inventory <span style="font-weight:400; font-size:11px;">Unlimited</span></div>
       <div id="ownedItemsList" class="aura-grid"></div>
 
+      </div>
+      <div id="potionInventoryPane" style="display:none;">
+        <div class="section-title">🧪 Potion Inventory <span style="font-weight:400; font-size:11px;">Unlimited</span></div>
+        <div id="potionInventoryList" class="aura-grid"></div>
+      </div>
       <div class="section-title">📜 Recipes (<span id="recipeCount">56</span>)</div>
+      <div style="font-size:11px; color:var(--text-dim); margin:-4px 0 10px;">Original Cosmic Roll recipes are used here.</div>
       <div id="recipeList" class="aura-grid"></div>
     </section>
 
@@ -651,6 +680,10 @@
         <label class="switch"><input type="checkbox" id="toggleSoundEffects"><span class="slider"></span></label>
       </div>
       <div class="setting-row">
+        <div class="label">🎵 Music</div>
+        <label class="switch"><input type="checkbox" id="toggleMusic"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
         <div class="label">🎯 Auto-Equip Rarest Pull</div>
         <label class="switch"><input type="checkbox" id="toggleAutoEquip"><span class="slider"></span></label>
       </div>
@@ -674,12 +707,11 @@
       <button class="link-row" id="openCreateAura">➕ Create Custom Aura <span class="chev">›</span></button>
       <button class="link-row" id="openAdminPanel">🔐 Admin Panel <span class="chev">›</span></button>
 
-      <div class="section-title">Save Status</div>
+      <div class="section-title">Automatic Device Save</div>
       <div class="setting-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
-        <div id="saveStatusText" style="font-size:12.5px; color:var(--text-dim); line-height:1.5;">Checking...</div>
+        <div id="saveStatusText" style="font-size:12.5px; color:var(--text-dim); line-height:1.5;">Checking automatic device save...</div>
       </div>
-      <button class="ghost-btn" id="forceSaveBtn">💾 Save Now</button>
-      <button class="ghost-btn" id="resetProgressBtn" style="color:var(--danger); border-color:var(--danger);">🗑️ Reset Progress</button>
+            <button class="ghost-btn" id="resetProgressBtn" style="color:var(--danger); border-color:var(--danger);">🗑️ Reset Progress</button>
     </section>
   </main>
 
@@ -755,6 +787,14 @@
     <div id="adminTools" style="display:none; margin-top:16px;">
       <button class="ghost-btn" id="admin10kBtn">+10,000 Coins</button>
       <button class="ghost-btn" id="adminSecretBtn">Discover Random Secret Aura</button>
+      <div style="margin-top:10px;">
+        <input type="number" class="admin-input" id="adminCoinsInput" placeholder="Set Coins" min="0" step="1">
+        <button class="ghost-btn" id="adminSetCoinsBtn">Set Coins</button>
+      </div>
+      <div style="margin-top:10px;">
+        <input type="text" class="admin-input" id="adminNextAuraInput" placeholder="Exact Aura name">
+        <button class="ghost-btn" id="adminNextAuraBtn">Set Next Roll Aura</button>
+      </div>
     </div>
     <div id="adminMsg" style="font-size:12.5px; color:var(--text-dim); margin-top:10px;"></div>
   </div>
@@ -836,7 +876,14 @@
 /* =========================================================
    0. CONFIG / CONSTANTS
 ========================================================= */
-const SAVE_KEY = "cosmicRollsSaveV3";
+function getDeviceSaveId(){
+  try{
+    let id = window.localStorage.getItem("cosmicRollsDeviceId");
+    if(!id){ id = "device_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,10); window.localStorage.setItem("cosmicRollsDeviceId", id); }
+    return id;
+  } catch(e){ return "fallback"; }
+}
+const SAVE_KEY = "cosmicRollsSaveV4_" + getDeviceSaveId();
 const TOTAL_AURAS = 10000;
 const ADMIN_PASSWORD = "COSMICROLLISTHEGOAT";
 
@@ -996,9 +1043,9 @@ const ITEMS = [];
   });
   ITEMS.push({
     id: "potion_heavenly", name: "Heavenly Potion", type:"potion", icon:"🕊️",
-    shards: { Divine: 25 }, coins: 500000,
+    shards: { Divine: 10 }, coins: 500000,
     effectType: "permanentLuck", effectValue: 150000,
-    description: "The ultimate brew. Consume for a permanent +150,000 Luck.",
+    description: "The ultimate brew. Consume to raise Luck up to the Level 100 maximum.",
   });
 })();
 const ITEMS_BY_ID = new Map(ITEMS.map(it => [it.id, it]));
@@ -1296,12 +1343,17 @@ let state = {
   tempMutationBonus: 0,
   tempMutationRolls: 0,
   forcedNextTier: null,
+  forcedNextAuraId: null,
   inventorySlots: 20,
+  auraInventory: {},
+  gearInventory: {},
+  potionInventory: {},
+  auraInventorySlots: 20,
   fastRollUnlocked: false,
   dailyQuests: null,
   settings: {
     fastRoll:false, vibration:true, rareAnim:true,
-    soundEffects:true, autoEquipRarest:false, rarePullAlerts:true, showOddsAsPercent:false,
+    soundEffects:true, music:true, autoEquipRarest:false, rarePullAlerts:true, showOddsAsPercent:false,
     autoCraft:false,
   },
 };
@@ -1320,9 +1372,12 @@ function hasLocalStorage(){
     return true;
   } catch(e){ return false; }
 }
+const DeviceLocalStore = {
+  async get(key){ return { value: window.localStorage.getItem(key) }; },
+  async set(key, value){ window.localStorage.setItem(key, value); }
+};
 function resolveStore(){
-  if(hasArtifactStorage()) return { backend: "artifact", api: window.storage };
-  if(hasLocalStorage()) return { backend: "local", api: LocalStore };
+  if(hasLocalStorage()) return { backend: "device-local", api: DeviceLocalStore };
   return { backend: "none", api: null };
 }
 
@@ -1331,6 +1386,16 @@ function scheduleSave(){
   if(saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(saveGame, 350);
 }
+
+// Automatic device save: progress is saved periodically and whenever the page is hidden/closed.
+let autoSaveInterval = null;
+function startAutoSave(){
+  if(autoSaveInterval) clearInterval(autoSaveInterval);
+  autoSaveInterval = setInterval(() => saveGame(), 15000);
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") saveGame(); });
+  window.addEventListener("pagehide", () => saveGame());
+}
+startAutoSave();
 
 let lastSaveStatus = "Not saved yet";
 function updateSaveStatusUI(){
@@ -1367,7 +1432,12 @@ async function saveGame(){
       tempMutationBonus: state.tempMutationBonus,
       tempMutationRolls: state.tempMutationRolls,
       forcedNextTier: state.forcedNextTier,
+      forcedNextAuraId: state.forcedNextAuraId,
       inventorySlots: state.inventorySlots,
+      auraInventory: state.auraInventory,
+      gearInventory: state.gearInventory,
+      potionInventory: state.potionInventory,
+      auraInventorySlots: state.auraInventorySlots,
       fastRollUnlocked: state.fastRollUnlocked,
       dailyQuests: state.dailyQuests,
       totalCoinsEarned: state.totalCoinsEarned,
@@ -1378,7 +1448,7 @@ async function saveGame(){
       settings: state.settings,
     };
     await api.set(SAVE_KEY, JSON.stringify(payload));
-    lastSaveStatus = "✅ Saved (" + backend + " storage) at " + new Date().toLocaleTimeString();
+    lastSaveStatus = "✅ Automatically saved to this device (" + backend + ") at " + new Date().toLocaleTimeString();
   } catch(e){
     console.error("Cosmic Rolls: save failed", e);
     lastSaveStatus = "⚠️ Save failed: " + (e && e.message ? e.message : "unknown error");
@@ -1400,8 +1470,8 @@ async function loadGame(){
         state.equippedAuraId = data.equippedAuraId || null;
         state.currentMutation = data.currentMutation || null;
         state.equippedMutation = data.equippedMutation || null;
-        state.luckLevel = data.luckLevel || 0;
-        state.mutationLevel = data.mutationLevel || 0;
+        state.luckLevel = Math.min(MAX_LUCK_LEVEL, data.luckLevel || 0);
+        state.mutationLevel = Math.min(MAX_MUTATION_LEVEL, data.mutationLevel || 0);
         state.battleLevel = data.battleLevel || 1;
         state.tierShards = Object.assign({ Common:0, Uncommon:0, Rare:0, Epic:0, Legendary:0, Mythic:0, Divine:0, Secret:0, Transcended:0 }, data.tierShards || {});
         state.inventory = data.inventory || {};
@@ -1413,7 +1483,12 @@ async function loadGame(){
         state.tempMutationBonus = data.tempMutationBonus || 0;
         state.tempMutationRolls = data.tempMutationRolls || 0;
         state.forcedNextTier = data.forcedNextTier || null;
+        state.forcedNextAuraId = data.forcedNextAuraId || null;
         state.inventorySlots = data.inventorySlots || 20;
+        state.auraInventory = data.auraInventory || {};
+        state.gearInventory = data.gearInventory || {};
+        state.potionInventory = data.potionInventory || {};
+        state.auraInventorySlots = Math.max(20, Math.min(200, data.auraInventorySlots || 20));
         state.fastRollUnlocked = !!data.fastRollUnlocked;
         state.dailyQuests = data.dailyQuests || null;
         state.totalCoinsEarned = typeof data.totalCoinsEarned === "number" ? data.totalCoinsEarned : 50;
@@ -1447,9 +1522,10 @@ window.addEventListener("beforeunload", () => { saveGame(); });
 window.addEventListener("visibilitychange", () => {
   if(document.visibilityState === "hidden") saveGame();
 });
-/* Fully automatic autosave — runs on its own every few seconds regardless of
-   any specific action, on top of the save-after-every-change behavior above. */
-setInterval(saveGame, 6000);
+/* Fully automatic device-local autosave — runs on its own every few seconds regardless of
+   any specific action, on top of the save-after-every-change behavior above. Each browser/device
+   gets its own save key. */
+setInterval(saveGame, 3000);
 
 /* =========================================================
    3. UTIL
@@ -1494,7 +1570,7 @@ function switchView(name){
   document.querySelectorAll("nav.bottomnav button").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.view === name);
   });
-  if(name === "index") renderIndex();
+  if(name === "index") mutationIndexActive ? renderMutationsIndex() : renderIndex();
   if(name === "battle") renderBattleHome();
   if(name === "inventory") renderInventory();
 }
@@ -1509,6 +1585,7 @@ document.querySelectorAll("nav.bottomnav button").forEach(btn => {
    per-level effect is now small and the base tier weights are much harder,
    so early luck levels barely move the needle — it takes real investment. */
 const LUCK_FACTOR_PER_LEVEL = 0.008;
+const MAX_LUCK_LEVEL = 100;
 function equippedGauntletLuckBonus(){
   if(!state.equippedGauntletId) return 0;
   const g = ITEMS_BY_ID.get(state.equippedGauntletId);
@@ -1537,6 +1614,10 @@ function pickWeightedTier(){
 }
 
 function rollAura(){
+  // Duplicate rolls are allowed; there is no anti-repeat rule.
+  if(state.forcedNextAuraId !== null && AURAS_BY_ID.has(state.forcedNextAuraId)){
+    return AURAS_BY_ID.get(state.forcedNextAuraId);
+  }
   const tierName = state.forcedNextTier || pickWeightedTier();
   const pool = AURAS_BY_TIER[tierName];
   const aura = pool[Math.floor(Math.random() * pool.length)];
@@ -1548,11 +1629,12 @@ function luckUpgradeCost(level){
 }
 function updateLuckUI(){
   document.getElementById("luckLevelDisplay").textContent = state.luckLevel;
-  document.getElementById("luckNextLevel").textContent = state.luckLevel + 1;
-  document.getElementById("luckCostDisplay").textContent = fmt(luckUpgradeCost(state.luckLevel)) + " 🪙";
-  document.getElementById("luckUpgradeBtn").disabled = state.coins < luckUpgradeCost(state.luckLevel);
+  document.getElementById("luckNextLevel").textContent = Math.min(MAX_LUCK_LEVEL, state.luckLevel + 1);
+  document.getElementById("luckCostDisplay").textContent = state.luckLevel >= MAX_LUCK_LEVEL ? "MAX" : fmt(luckUpgradeCost(state.luckLevel)) + " 🪙";
+  document.getElementById("luckUpgradeBtn").disabled = state.luckLevel >= MAX_LUCK_LEVEL || state.coins < luckUpgradeCost(state.luckLevel);
 }
 document.getElementById("luckUpgradeBtn").addEventListener("click", () => {
+  if(state.luckLevel >= MAX_LUCK_LEVEL){ showToast("Luck is already at the maximum Level 100!"); return; }
   const cost = luckUpgradeCost(state.luckLevel);
   if(state.coins < cost){
     showToast("Not enough Coins for a Luck upgrade!");
@@ -1570,6 +1652,7 @@ document.getElementById("luckUpgradeBtn").addEventListener("click", () => {
 const MUTATION_CHANCE_BASE = 0.02;
 const MUTATION_CHANCE_PER_LEVEL = 0.01;
 const MUTATION_CHANCE_CAP = 0.5;
+const MAX_MUTATION_LEVEL = 48; // 2% base + 48% upgrades = 50% maximum
 function mutationChance(){
   const tempBonus = state.tempMutationRolls > 0 ? state.tempMutationBonus : 0;
   return Math.min(MUTATION_CHANCE_CAP, MUTATION_CHANCE_BASE + state.mutationLevel * MUTATION_CHANCE_PER_LEVEL + tempBonus);
@@ -1579,17 +1662,18 @@ function mutationUpgradeCost(level){
 }
 function updateMutationUI(){
   document.getElementById("mutationChanceDisplay").textContent = (mutationChance() * 100).toFixed(1) + "%";
-  document.getElementById("mutationCostDisplay").textContent = fmt(mutationUpgradeCost(state.mutationLevel)) + " 🪙";
-  document.getElementById("mutationUpgradeBtn").disabled = state.coins < mutationUpgradeCost(state.mutationLevel);
+  document.getElementById("mutationCostDisplay").textContent = mutationChance() >= MUTATION_CHANCE_CAP ? "MAX" : fmt(mutationUpgradeCost(state.mutationLevel)) + " 🪙";
+  document.getElementById("mutationUpgradeBtn").disabled = mutationChance() >= MUTATION_CHANCE_CAP || state.mutationLevel >= MAX_MUTATION_LEVEL || state.coins < mutationUpgradeCost(state.mutationLevel);
 }
 document.getElementById("mutationUpgradeBtn").addEventListener("click", () => {
+  if(mutationChance() >= MUTATION_CHANCE_CAP || state.mutationLevel >= MAX_MUTATION_LEVEL){ showToast("Mutation Chance is already at the maximum 50%!"); return; }
   const cost = mutationUpgradeCost(state.mutationLevel);
   if(state.coins < cost){
     showToast("Not enough Coins for a Mutation Chance upgrade!");
     return;
   }
   state.coins -= cost;
-  state.mutationLevel += 1;
+  state.mutationLevel = Math.min(MAX_MUTATION_LEVEL, state.mutationLevel + 1);
   updateTopbar();
   updateMutationUI();
   scheduleSave();
@@ -1625,6 +1709,45 @@ function playBeep(freq, duration, type){
   } catch(e){ /* audio not available, ignore */ }
 }
 
+/* Original self-contained Cosmic Rolls background music via WebAudio.
+   No external music files or copyrighted audio are used. */
+let musicStarted = false;
+let musicTimer = null;
+const cosmicMelody = [261.63,329.63,392.00,523.25,392.00,329.63,293.66,349.23,
+  440.00,523.25,440.00,349.23,261.63,329.63,392.00,493.88];
+
+function stopCosmicMusic(){
+  musicStarted = false;
+  if(musicTimer){ clearInterval(musicTimer); musicTimer = null; }
+}
+function startCosmicMusic(){
+  if(!state.settings.music || musicStarted) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    musicStarted = true;
+    let noteIndex = 0;
+    const playNote = () => {
+      if(!musicStarted) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = cosmicMelody[noteIndex % cosmicMelody.length];
+      gain.gain.setValueAtTime(0.025, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.42);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.42);
+      noteIndex++;
+    };
+    playNote();
+    musicTimer = setInterval(playNote, 420);
+  } catch(e){ /* audio not available, ignore */ }
+}
+
+document.addEventListener("click", startCosmicMusic);
+
 const rollBtn = document.getElementById("rollBtn");
 const auraStage = document.getElementById("auraStage");
 const auraContent = document.getElementById("auraContent");
@@ -1633,6 +1756,13 @@ const auraGlyph = document.getElementById("auraGlyph");
 let isRolling = false;
 rollBtn.addEventListener("click", () => {
   if(isRolling) return;
+  if(auraInventoryUsed() >= state.auraInventorySlots){
+    const possibleForced = state.forcedNextAuraId !== null ? AURAS_BY_ID.get(state.forcedNextAuraId) : null;
+    if(!possibleForced || !state.auraInventory[possibleForced.id]){
+      showToast("Aura Inventory is full — upgrade your Aura Slots first!");
+      return;
+    }
+  }
   isRolling = true;
   rollBtn.disabled = true;
 
@@ -1667,10 +1797,12 @@ function finishRoll(aura, mutation){
   const isNew = !state.discovered.has(aura.id);
   state.discovered.add(aura.id);
   state.currentAuraId = aura.id;
+  state.auraInventory[aura.id] = (state.auraInventory[aura.id] || 0) + 1;
   state.currentMutation = mutation;
   state.tierShards[aura.tier] = (state.tierShards[aura.tier] || 0) + 1;
 
   if(state.forcedNextTier) state.forcedNextTier = null;
+  if(state.forcedNextAuraId !== null) state.forcedNextAuraId = null;
   if(state.tempLuckRolls > 0) state.tempLuckRolls -= 1;
   if(state.tempMutationRolls > 0) state.tempMutationRolls -= 1;
 
@@ -1906,6 +2038,43 @@ function renderIndex(){
   }
 }
 
+/* Index Mutation category */
+const MUTATION_PAGE_SIZE = 60;
+let mutationIndexPage = 0;
+let mutationIndexActive = false;
+function renderMutationsIndex(){
+  const grid = document.getElementById("mutationGrid");
+  const start = mutationIndexPage * MUTATION_PAGE_SIZE;
+  const results = MUTATIONS.slice(start, start + MUTATION_PAGE_SIZE);
+  const found = state.totalMutationsFound || 0;
+  document.getElementById("mutationIndexCount").textContent = Math.min(found, MUTATIONS.length) + " / " + MUTATIONS.length;
+  grid.innerHTML = results.map((m,i) => '<div class="aura-card">' +
+    '<div class="left"><div class="name">🧬 ' + escapeHtml(m.name) + ' ' + m.mult + 'x</div>' +
+    '<div class="meta">Mutation #' + (start+i+1) + ' · ' + m.mult + '× rarity multiplier</div></div>' +
+    '<div class="not-rolled-tag">' + (found > 0 ? 'Available' : 'Not found yet') + '</div></div>').join("");
+  const maxPage = Math.max(0, Math.ceil(MUTATIONS.length / MUTATION_PAGE_SIZE) - 1);
+  document.getElementById("prevMutationPageBtn").disabled = mutationIndexPage <= 0;
+  document.getElementById("nextMutationPageBtn").disabled = mutationIndexPage >= maxPage;
+  document.getElementById("mutationPageInfo").textContent = "Page " + (mutationIndexPage + 1) + " / " + (maxPage + 1);
+}
+function setIndexCategory(category){
+  mutationIndexActive = category === "mutations";
+  document.getElementById("indexAuraSearchRow").style.display = mutationIndexActive ? "none" : "flex";
+  document.getElementById("indexCountLabel").style.display = mutationIndexActive ? "none" : "block";
+  document.getElementById("auraGrid").style.display = mutationIndexActive ? "none" : "flex";
+  document.getElementById("pager").style.display = mutationIndexActive ? "none" : "flex";
+  document.getElementById("indexMutationsPane").style.display = mutationIndexActive ? "block" : "none";
+  document.getElementById("indexAurasTab").classList.toggle("primary-btn", !mutationIndexActive);
+  document.getElementById("indexAurasTab").classList.toggle("ghost-btn", mutationIndexActive);
+  document.getElementById("indexMutationsTab").classList.toggle("primary-btn", mutationIndexActive);
+  document.getElementById("indexMutationsTab").classList.toggle("ghost-btn", !mutationIndexActive);
+  if(mutationIndexActive) renderMutationsIndex(); else renderIndex();
+}
+document.getElementById("indexAurasTab").addEventListener("click", () => setIndexCategory("auras"));
+document.getElementById("indexMutationsTab").addEventListener("click", () => setIndexCategory("mutations"));
+document.getElementById("prevMutationPageBtn").addEventListener("click", () => { if(mutationIndexPage > 0){ mutationIndexPage--; renderMutationsIndex(); } });
+document.getElementById("nextMutationPageBtn").addEventListener("click", () => { const maxPage = Math.ceil(MUTATIONS.length / MUTATION_PAGE_SIZE) - 1; if(mutationIndexPage < maxPage){ mutationIndexPage++; renderMutationsIndex(); } });
+
 /* =========================================================
    8. FLEX BATTLE
 ========================================================= */
@@ -2099,8 +2268,7 @@ function canAffordRecipe(item){
   for(const tier in item.shards){
     if((state.tierShards[tier] || 0) < item.shards[tier]) return false;
   }
-  const alreadyOwned = (state.inventory[item.id] || 0) > 0;
-  if(!alreadyOwned && usedSlots() >= state.inventorySlots) return false;
+  // Gear and Potions have unlimited inventory space.
   return true;
 }
 function doCraft(item){
@@ -2127,6 +2295,56 @@ function autoCraftPass(){
   }
 }
 
+let inventoryCategory = "auras";
+function auraInventoryUsed(){
+  return Object.values(state.auraInventory || {}).filter(n => Number(n) > 0).length;
+}
+function renderAuraInventory(){
+  const list = document.getElementById("auraInventoryList");
+  const used = auraInventoryUsed();
+  document.getElementById("auraSlotUsageText").textContent = used + " / " + state.auraInventorySlots + " slots";
+  const btn = document.getElementById("upgradeAuraSlotsBtn");
+  const atMax = state.auraInventorySlots >= 200;
+  btn.disabled = atMax || state.coins < slotUpgradeCost(state.auraInventorySlots);
+  btn.textContent = atMax ? "Max Aura Slots Reached (200)" : "➕ +10 Aura Slots — " + fmt(slotUpgradeCost(state.auraInventorySlots)) + " 🪙";
+  const entries = Object.entries(state.auraInventory || {}).filter(([id,count]) => count > 0).map(([id,count]) => ({a:AURAS_BY_ID.get(Number(id)),count})).filter(x => x.a);
+  if(!entries.length){ list.innerHTML = '<div class="aura-placeholder" style="padding:10px 2px;">No Auras rolled yet — press ROLL!</div>'; return; }
+  list.innerHTML = entries.sort((x,y)=>y.a.odds-x.a.odds).map(({a,count}) =>
+    '<div class="aura-card"><div class="left"><div class="name">' + escapeHtml(a.name) + ' ×' + count + '</div><div class="meta">' + a.tier + ' · ' + oddsLabel(a.odds) + '</div></div></div>'
+  ).join("");
+}
+function renderGearAndPotionInventories(){
+  const gear = document.getElementById("ownedItemsList");
+  const potion = document.getElementById("potionInventoryList");
+  const ids = Object.keys(state.inventory).filter(id => state.inventory[id] > 0);
+  const gearIds = ids.filter(id => { const it=ITEMS_BY_ID.get(id); return it && it.type === "gauntlet"; });
+  const potionIds = ids.filter(id => { const it=ITEMS_BY_ID.get(id); return it && it.type === "potion"; });
+  const card = id => { const item=ITEMS_BY_ID.get(id), count=state.inventory[id]; const equipped=item.type==="gauntlet" && state.equippedGauntletId===id; return '<div class="item-card' + (equipped?' equipped':'') + '"><div class="left"><div class="ic-name">' + item.icon + ' ' + escapeHtml(item.name) + ' ×' + count + '</div><div class="ic-desc">' + item.description + '</div></div><button class="item-action-btn' + (equipped?' equipped':'') + '" data-item-action="' + item.id + '">' + (equipped?'Unequip':'Equip') + '</button></div>'; };
+  gear.innerHTML = gearIds.length ? gearIds.map(card).join("") : '<div class="aura-placeholder" style="padding:10px 2px;">No Gear owned yet.</div>';
+  potion.innerHTML = potionIds.length ? potionIds.map(id => { const item=ITEMS_BY_ID.get(id); return '<div class="item-card"><div class="left"><div class="ic-name">' + item.icon + ' ' + escapeHtml(item.name) + ' ×' + state.inventory[id] + '</div><div class="ic-desc">' + item.description + '</div></div><button class="item-action-btn" data-item-action="' + item.id + '">Use</button></div>'; }).join("") : '<div class="aura-placeholder" style="padding:10px 2px;">No Potions owned yet.</div>';
+}
+function switchInventoryTab(tab){
+  inventoryCategory=tab;
+  document.getElementById("auraInventoryPane").style.display=tab==="auras"?"block":"none";
+  document.getElementById("gearInventoryPane").style.display=tab==="gear"?"block":"none";
+  document.getElementById("potionInventoryPane").style.display=tab==="potions"?"block":"none";
+  document.getElementById("auraInventoryTab").className=tab==="auras"?"primary-btn":"ghost-btn";
+  document.getElementById("gearInventoryTab").className=tab==="gear"?"primary-btn":"ghost-btn";
+  document.getElementById("potionInventoryTab").className=tab==="potions"?"primary-btn":"ghost-btn";
+  document.getElementById("auraInventoryTab").style.marginTop=document.getElementById("gearInventoryTab").style.marginTop=document.getElementById("potionInventoryTab").style.marginTop="0";
+  renderInventory();
+}
+document.getElementById("auraInventoryTab").addEventListener("click",()=>switchInventoryTab("auras"));
+document.getElementById("gearInventoryTab").addEventListener("click",()=>switchInventoryTab("gear"));
+document.getElementById("potionInventoryTab").addEventListener("click",()=>switchInventoryTab("potions"));
+document.getElementById("upgradeAuraSlotsBtn").addEventListener("click",()=>{
+  if(state.auraInventorySlots>=200)return;
+  const cost=slotUpgradeCost(state.auraInventorySlots);
+  if(state.coins<cost){showToast("Not enough Coins to expand Aura Inventory!");return;}
+  state.coins-=cost; state.auraInventorySlots=Math.min(200,state.auraInventorySlots+10);
+  updateTopbar(); renderInventory(); scheduleSave(); showToast("Aura Inventory expanded to " + state.auraInventorySlots + " slots!");
+});
+
 function renderInventory(){
   const shardGrid = document.getElementById("shardGrid");
   shardGrid.innerHTML = TIER_ORDER.map(t =>
@@ -2134,13 +2352,6 @@ function renderInventory(){
     '<div class="sc-count">' + fmt(state.tierShards[t] || 0) + '</div>' +
     '<div class="sc-label">' + t + '</div></div>'
   ).join("");
-
-  const slotsUsed = usedSlots();
-  document.getElementById("slotUsageText").textContent = slotsUsed + " / " + state.inventorySlots + " slots used";
-  const atMax = state.inventorySlots >= 200;
-  const slotBtn = document.getElementById("upgradeSlotsBtn");
-  slotBtn.disabled = atMax || state.coins < slotUpgradeCost(state.inventorySlots);
-  slotBtn.textContent = atMax ? "Max Slots Reached (200)" : "➕ +10 Slots — " + fmt(slotUpgradeCost(state.inventorySlots)) + " 🪙";
 
   const ownedIds = Object.keys(state.inventory).filter(id => state.inventory[id] > 0);
   const ownedList = document.getElementById("ownedItemsList");
@@ -2158,6 +2369,9 @@ function renderInventory(){
         '<button class="item-action-btn' + (isEquipped ? ' equipped' : '') + '" data-item-action="' + item.id + '">' + actionLabel + '</button></div>';
     }).join("");
   }
+
+  renderAuraInventory();
+  renderGearAndPotionInventories();
 
   const recipeList = document.getElementById("recipeList");
   recipeList.innerHTML = ITEMS.map(item => {
@@ -2180,20 +2394,7 @@ function renderInventory(){
   }).join("");
 }
 
-document.getElementById("upgradeSlotsBtn").addEventListener("click", () => {
-  if(state.inventorySlots >= 200) return;
-  const cost = slotUpgradeCost(state.inventorySlots);
-  if(state.coins < cost){
-    showToast("Not enough Coins to expand your Inventory!");
-    return;
-  }
-  state.coins -= cost;
-  state.inventorySlots = Math.min(200, state.inventorySlots + 10);
-  updateTopbar();
-  renderInventory();
-  scheduleSave();
-  showToast("Inventory expanded to " + state.inventorySlots + " slots!");
-});
+
 
 document.getElementById("recipeList").addEventListener("click", e => {
   const btn = e.target.closest("[data-craft-id]");
@@ -2225,6 +2426,17 @@ document.getElementById("ownedItemsList").addEventListener("click", e => {
   scheduleSave();
 });
 
+["gearInventoryList","potionInventoryList"].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener("click", e=>{
+    const btn=e.target.closest("[data-item-action]"); if(!btn)return;
+    const item=ITEMS_BY_ID.get(btn.dataset.itemAction); if(!item)return;
+    if(item.type==="potion"){ if((state.inventory[item.id]||0)<=0)return; state.inventory[item.id]-=1; applyPotionEffect(item); }
+    else { state.equippedGauntletId=(state.equippedGauntletId===item.id)?null:item.id; showToast(state.equippedGauntletId?"Equipped "+item.name:"Unequipped "+item.name); }
+    updateTopbar(); renderInventory(); scheduleSave();
+  });
+});
+
 function applyPotionEffect(item){
   switch(item.effectType){
     case "coins":
@@ -2254,7 +2466,7 @@ function applyPotionEffect(item){
       showToast("Used " + item.name + " — skipped +" + item.effectValue + " NPC level" + (item.effectValue>1?"s":"") + "!");
       break;
     case "permanentLuck":
-      state.luckLevel += item.effectValue;
+      state.luckLevel = Math.min(MAX_LUCK_LEVEL, state.luckLevel + item.effectValue);
       showToast("👑 Used " + item.name + " — +" + fmt(item.effectValue) + " permanent Luck!");
       break;
   }
@@ -2270,6 +2482,7 @@ function applySettingsToUI(){
   document.getElementById("toggleVibration").checked = state.settings.vibration;
   document.getElementById("toggleRareAnim").checked = state.settings.rareAnim;
   document.getElementById("toggleSoundEffects").checked = state.settings.soundEffects;
+   document.getElementById("toggleMusic").checked = state.settings.music !== false;
   document.getElementById("toggleAutoEquip").checked = state.settings.autoEquipRarest;
   document.getElementById("toggleRareAlerts").checked = state.settings.rarePullAlerts;
   document.getElementById("toggleOddsPercent").checked = state.settings.showOddsAsPercent;
@@ -2306,6 +2519,11 @@ document.getElementById("toggleRareAnim").addEventListener("change", e => {
 document.getElementById("toggleSoundEffects").addEventListener("change", e => {
   state.settings.soundEffects = e.target.checked; scheduleSave();
 });
+document.getElementById("toggleMusic").addEventListener("change", e => {
+  state.settings.music = e.target.checked;
+  if(state.settings.music) startCosmicMusic(); else stopCosmicMusic();
+  scheduleSave();
+});
 document.getElementById("toggleAutoEquip").addEventListener("change", e => {
   state.settings.autoEquipRarest = e.target.checked; scheduleSave();
 });
@@ -2331,6 +2549,10 @@ document.getElementById("resetProgressBtn").addEventListener("click", async () =
   state.battleLevel = 1;
   state.tierShards = { Common:0, Uncommon:0, Rare:0, Epic:0, Legendary:0, Mythic:0, Divine:0, Secret:0, Transcended:0 };
   state.inventory = {};
+  state.auraInventory = {};
+  state.gearInventory = {};
+  state.potionInventory = {};
+  state.auraInventorySlots = 20;
   state.craftedEver = {};
   state.equippedGauntletId = null;
   state.totalCoinsEarned = 50;
@@ -2461,10 +2683,7 @@ document.getElementById("openDailyQuests").addEventListener("click", () => {
   renderDailyQuests();
 });
 
-document.getElementById("forceSaveBtn").addEventListener("click", async () => {
-  await saveGame();
-  showToast(lastSaveStatus.startsWith("✅") ? "Saved!" : "Save failed — see status below");
-});
+
 document.querySelectorAll("[data-close]").forEach(btn => {
   btn.addEventListener("click", () => closeModal(btn.dataset.close));
 });
@@ -2491,16 +2710,19 @@ document.getElementById("createAuraSubmitBtn").addEventListener("click", () => {
   const record = { name, tier, odds, color };
   const aura = addCustomAura(record);
   state.customAuras.push({ id: aura.id, name, tier, odds, color });
-  state.discovered.add(aura.id);
-  state.currentAuraId = aura.id;
+  // Creating an Aura does not grant or discover it; the player must roll it.
+  state.currentAuraId = null;
+  state.currentMutation = null;
 
   document.getElementById("customAuraName").value = "";
   document.getElementById("customAuraOdds").value = "";
   document.getElementById("customOddsPreview").textContent = "Preview: 1 / —";
-  msg.textContent = "✅ " + name + " added to the Index!";
+  msg.textContent = "✅ " + name + " added to the Index — roll it to discover it!";
   msg.style.color = "var(--c-uncommon)";
 
   renderAuraStage(aura, false, null);
+  if(state.currentAuraId){ renderAuraStage(AURAS_BY_ID.get(state.currentAuraId), false, state.currentMutation); }
+  else { auraContent.innerHTML = '<div class="aura-placeholder">Press ROLL to discover your new Aura</div>'; }
   updateTopbar();
   renderIndex();
   scheduleSave();
@@ -2535,6 +2757,32 @@ document.getElementById("adminSecretBtn").addEventListener("click", () => {
   updateTopbar();
   scheduleSave();
   showToast("Discovered: " + aura.name);
+});
+
+document.getElementById("adminSetCoinsBtn").addEventListener("click", () => {
+  const input = document.getElementById("adminCoinsInput");
+  const value = Number(input.value);
+  if(!Number.isFinite(value) || value < 0 || !Number.isInteger(value)){
+    showToast("Enter a valid whole number of Coins.");
+    return;
+  }
+  state.coins = value;
+  updateTopbar();
+  scheduleSave();
+  showToast("Coins set to " + fmt(value));
+});
+
+document.getElementById("adminNextAuraBtn").addEventListener("click", () => {
+  const input = document.getElementById("adminNextAuraInput");
+  const name = input.value.trim();
+  const aura = AURAS.find(a => a.name === name);
+  if(!name || !aura){
+    showToast("Aura not found — type its exact name.");
+    return;
+  }
+  state.forcedNextAuraId = aura.id;
+  scheduleSave();
+  showToast("Next roll set to: " + aura.name);
 });
 
 /* =========================================================
